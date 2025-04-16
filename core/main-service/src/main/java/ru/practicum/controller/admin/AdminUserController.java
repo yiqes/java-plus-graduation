@@ -61,9 +61,10 @@ public class AdminUserController {
                            @RequestParam(name = "from", defaultValue = "0") @PositiveOrZero int from,
                            @RequestParam(name = "size", defaultValue = "10") @PositiveOrZero int size) {
         log.info("==> getUsers by ids = {}, from = {}, size = {}", ids, from, size);
-        List<UserDto> userDtos = userService.getUsers(ids, from, size);
-        log.info("<== getUsers result: {}", userDtos);
-        return userDtos;
+        AdminUsersGetAllParams adminUsersGetAllParams = new AdminUsersGetAllParams(ids, from, size);
+        List<UserDto> receivedUserDtoList = userService.getUsers(adminUsersGetAllParams);
+        log.info("<== GET. User list with size: {}", receivedUserDtoList.size());
+        return receivedUserDtoList;
     }
 
     /**

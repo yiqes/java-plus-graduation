@@ -1,5 +1,7 @@
 package ru.practicum.repository;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,31 +24,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     Optional<User> findByEmail(String email);
 
-    /**
-     * Gets users.
-     *
-     * @param from the from
-     * @param size the size
-     * @return the users
-     */
     @Query(value = "select * " +
             "from users " +
             "order by user_id OFFSET :from LIMIT :size",
             nativeQuery = true)
     List<User> getUsers(@Param("from") int from, @Param("size") int size);
 
-    /**
-     * Gets users by ids.
-     *
-     * @param from the from
-     * @param size the size
-     * @param ids  the ids
-     * @return the users by ids
-     */
     @Query(value = "select * " +
             "from users " +
             "where user_id in (:ids) order by user_id OFFSET :from LIMIT :size",
             nativeQuery = true)
-    List<User> getUsersByIds(@Param("from") int from, @Param("size") int size, @Param("ids") List<Long> ids);
+    List<User> getUsersByIds(@Param("ids") List<Long> ids, PageRequest pageRequest);
+
+    List<User> findAllByIdIn(List<Long> ids, Pageable pageable);
 }
 

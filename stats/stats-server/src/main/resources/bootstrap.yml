@@ -1,12 +1,31 @@
 spring:
   application:
-    name: stats-server # ??? stats-server
+    name: stats-server
   cloud:
     config:
       discovery:
-        enabled: true # ???????????? Eureka ??? ?????? Config Server
-        service-id: config-server # ??? ??????? Config Server ? Eureka
-      fail-fast: true # ?????????? ??????, ???? ?????? ??????????
+        enabled: true
+        service-id: config-server
+      fail-fast: true
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://ewm-db:5432/ewm-stats
+    username: root
+    password: root
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    generate-ddl: false
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+
+  sql:
+    init:
+      mode: always
 
 eureka:
   client:

@@ -1,5 +1,6 @@
 package ru.practicum.service.user;
 
+import ru.practicum.controller.admin.AdminUsersGetAllParams;
 import ru.practicum.dto.user.NewUserRequest;
 import ru.practicum.dto.user.UserDto;
 
@@ -17,15 +18,8 @@ public interface UserService {
      */
     UserDto add(NewUserRequest newUserRequest);
 
-    /**
-     * Gets users.
-     *
-     * @param ids  the ids
-     * @param from the from
-     * @param size the size
-     * @return the users
-     */
-    List<UserDto> getUsers(List<Long> ids, int from, int size);
+
+    List<UserDto> getUsers(AdminUsersGetAllParams adminUsersGetAllParams);
 
     /**
      * Delete.

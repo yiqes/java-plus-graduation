@@ -4,8 +4,10 @@ package ru.practicum.service.user;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.controller.admin.AdminUsersGetAllParams;
 import ru.practicum.dto.user.NewUserRequest;
 import ru.practicum.dto.user.UserDto;
 import ru.practicum.exception.ConflictException;
@@ -46,14 +48,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserDto> getUsers(List<Long> ids, int from, int size) {
-        List<UserDto> userDtos;
-        if (ids == null || ids.isEmpty()) {
-            userDtos = userMapper.toUserDtos(userRepository.getUsers(from, size));
-        } else {
-            userDtos = userMapper.toUserDtos(userRepository.getUsersByIds(from, size, ids));
-        }
-        return userDtos;
+    public List<UserDto> getUsers(AdminUsersGetAllParams adminUsersGetAllParams) {
+        PageRequest pageRequest = PageRequest.of(
+                adminUsersGetAllParams.from(), adminUsersGetAllParams.size());
+        List<User> userSearchList = adminUsersGetAllParams.ids() == null
+                ? userRepository.findAll(pageRequest).stream().toList()
+                : userRepository.findAllByIdIn(adminUsersGetAllParams.ids(), pageRequest);
+
+        return userSearchList.stream()
+                .map(userMapper::toUserDto).toList();
     }
 
     @Override
