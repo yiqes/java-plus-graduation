@@ -67,8 +67,9 @@ public class AdminUserController {
         return receivedUserDtoList;
     }
 
+
     /**
-     * Delete.
+     * Delete user with provided id by admin.
      *
      * @param userId the user id
      */

@@ -43,7 +43,7 @@ public class AdminCategoryController {
     }
 
     /**
-     * Delete.
+     * Delete category with provided id by admin.
      *
      * @param catId the cat id
      */
