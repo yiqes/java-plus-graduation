@@ -1,6 +1,3 @@
-FROM eclipse-temurin:21-jre-jammy
-VOLUME /tmp
-ARG JAR_FILE=target/gateway-server-*.jar
-COPY ${JAR_FILE} app.jar
-EXPOSE 8080
-ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -jar /app.jar"]
+FROM amazoncorretto:21
+COPY target/*.jar app.jar
+ENTRYPOINT ["java","-jar","/app.jar"]

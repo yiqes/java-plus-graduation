@@ -8,22 +8,13 @@
         <artifactId>explore-with-me</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
+    <modules>
+        <module>gateway-server</module>
+        <module>config-server</module>
+        <module>discovery-server</module>
+    </modules>
 
     <artifactId>infra</artifactId>
-
-    <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
-        </dependency>
-
-    </dependencies>
 
     <packaging>pom</packaging>
 </project>
