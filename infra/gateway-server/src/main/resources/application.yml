@@ -1,6 +1,4 @@
 spring:
-  main:
-    web-application-type: reactive
   application:
     name: gateway-server
   cloud:
@@ -20,7 +18,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: gateway,health,info
+        include: gateway, health, info
 
 eureka:
   client:
