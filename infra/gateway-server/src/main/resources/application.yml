@@ -2,7 +2,7 @@ spring:
   main:
     web-application-type: reactive
   application:
-    name: gateway
+    name: gateway-server
   config:
     import: optional:configserver:http://config-server:9091
   cloud:
@@ -37,4 +37,4 @@ eureka:
     lease-renewal-interval-in-seconds: 10
 
 server:
-  port: 8080
+  port: 0
