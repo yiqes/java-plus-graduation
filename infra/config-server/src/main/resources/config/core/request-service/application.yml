@@ -7,14 +7,17 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     generate-ddl: false
     properties:
       hibernate:
         format_sql: true
-    show-sql: false
+    show-sql: true
 
   sql:
     init:
       mode: always
+
+  stat-server:
+    uri: http://stats-server:9090
