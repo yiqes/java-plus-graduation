@@ -6,6 +6,8 @@ spring:
           uri: lb://user-service
           predicates:
             - Path=/admin/users/**
+          filters:
+            - RewritePath=/admin/users/(?<segment>.*), /api/$\{segment}
 
         - id: event-service_route
           uri: lb://event-service
