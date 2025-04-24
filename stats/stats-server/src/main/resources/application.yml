@@ -27,6 +27,15 @@ spring:
     init:
       mode: always
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: 'health'
+  endpoint:
+    health:
+      enabled: true
+
 eureka:
   client:
     serviceUrl:
