@@ -6,15 +6,26 @@ spring:
           uri: lb://user-service
           predicates:
             - Path=/admin/users/**
-          filters:
-            - RewritePath=/admin/users/(?<segment>.*), /api/$\{segment}
 
         - id: event-service_route
           uri: lb://event-service
           predicates:
             - Path=/events/**
+            - Path=/admin/events/**
+            - Path=/compilations/**
+            - Path=/admin/compilations/**
+            - Path=/admin/compilations/{compId}
+            - Path=/admin/events/{eventId}
 
         - id: request-service_route
           uri: lb://request-service
           predicates:
             - Path=/requests/**
+            - Path=/admin/requests/**
+            - Path=/admin/requests/{requestId}
+            - Path=/admin/events/{eventId}/requests
+            - Path=/users/{userId}/events/{eventId}/requests
+            - Path=/users/{userId}/requests
+
+server:
+  port: 8080
