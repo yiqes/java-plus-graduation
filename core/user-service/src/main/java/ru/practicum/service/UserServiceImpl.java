@@ -1,9 +1,8 @@
 package ru.practicum.service;
 
 
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,14 +25,19 @@ import java.util.stream.Collectors;
  * The type User service.
  */
 @Service
-@RequiredArgsConstructor
 @Transactional
-@FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserServiceImpl implements UserService {
 
-    UserMapper userMapper;
-    UserRepository userRepository;
-    NewUserMapper newUserRequestMapper;
+    private final UserRepository userRepository;
+    private final NewUserMapper newUserRequestMapper;
+    private final UserMapper userMapper;
+
+    @Autowired
+    public UserServiceImpl(UserRepository userRepository, NewUserMapper newUserRequestMapper, UserMapper userMapper) {
+        this.userRepository = userRepository;
+        this.newUserRequestMapper = newUserRequestMapper;
+        this.userMapper = userMapper;
+    }
 
     @Override
     public UserDto add(NewUserRequest newUserRequest) {

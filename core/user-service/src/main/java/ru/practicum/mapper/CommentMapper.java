@@ -23,7 +23,7 @@ public interface CommentMapper {
     @Mapping(target = "text", source = "text")
     @Mapping(target = "created", source = "created", dateFormat = "yyyy-MM-dd HH:mm:ss")
     @Mapping(target = "updated", source = "updated", dateFormat = "yyyy-MM-dd HH:mm:ss")
-    @Mapping(target = "replyComment", source = "parent", qualifiedByName = "toDtoRecursive")
+    @Mapping(target = "parentId", source = "parentId")
     CommentDto toDto(Comment comment);
 
     /**
@@ -38,6 +38,6 @@ public interface CommentMapper {
     @Mapping(target = "text", source = "text")
     @Mapping(target = "created", source = "created", dateFormat = "yyyy-MM-dd HH:mm:ss")
     @Mapping(target = "updated", source = "updated", dateFormat = "yyyy-MM-dd HH:mm:ss")
-    @Mapping(target = "replyComment", ignore = true) // Предотвращение бесконечной рекурсии
+    @Mapping(target = "parentId", source = "parentId") // Предотвращение бесконечной рекурсии
     CommentDto toDtoRecursive(Comment comment);
-    }
+}
