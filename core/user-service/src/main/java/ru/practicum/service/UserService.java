@@ -3,6 +3,7 @@ package ru.practicum.service;
 import ru.practicum.controller.AdminUsersGetAllParams;
 import ru.practicum.dto.user.NewUserRequest;
 import ru.practicum.dto.user.UserDto;
+import ru.practicum.dto.user.UserShortDto;
 
 import java.util.List;
 import java.util.Map;
@@ -33,5 +34,5 @@ public interface UserService {
 
     UserDto getById(long userId);
 
-    Map<Long, UserDto> getByIds(List<Long> userIds);
+    Map<Long, UserShortDto> getByIds(List<Long> userIds);
 }

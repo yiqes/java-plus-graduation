@@ -1,15 +1,16 @@
 package ru.practicum.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 import ru.practicum.model.Request;
 import ru.practicum.enums.RequestStatus;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * The interface Request repository.
  */
+@Repository
 public interface RequestRepository extends JpaRepository<Request, Long> {
 
     /**
@@ -19,6 +20,9 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
      * @return the list
      */
     List<Request> findAllByRequesterId(Long requesterId);
+
+    boolean existsByEventIdAndRequesterId(Long eventId, Long requesterId);
+
 
     /**
      * Find all by event id list.
@@ -35,7 +39,7 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
      * @param eventId the event id
      * @return the list
      */
-    List<Request> findByIdInAndEventId(Set<Long> ids, Long eventId);
+    List<Request> findByIdInAndEventId(List<Long> ids, Long eventId);
 
     /**
      * Count by status and event id integer.
@@ -45,4 +49,9 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
      * @return the integer
      */
     Integer countByStatusAndEventId(RequestStatus status, Long id);
+
+    long countAllByEventIdAndStatusIs(long eventId, RequestStatus status);
+    List<Request> findAllByIdInAndEventIdIs(List<Long> eventIds, long eventId);
+
+
 }

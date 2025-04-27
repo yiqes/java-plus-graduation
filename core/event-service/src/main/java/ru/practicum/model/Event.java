@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.dto.user.UserDto;
+import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.enums.EventState;
 
 import java.time.LocalDateTime;
@@ -57,7 +58,7 @@ public class Event {
     Long initiatorId;
 
     @Transient
-    UserDto initiator;
+    UserShortDto initiator;
 
     @Column(name = "PARTICIPANT_LIMIT")
     Long participantLimit;

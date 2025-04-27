@@ -12,8 +12,9 @@ import java.time.LocalDateTime;
  */
 @Setter
 @Getter
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @AllArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@NoArgsConstructor
 public class ParticipationRequestDto {
         Long id;
         Long event;

@@ -52,6 +52,19 @@ public class RequestMapper {
         );
     }
 
+    public ParticipationRequestDto toParticipantRequestDto(Request participationRequest) {
+
+        ParticipationRequestDto participationRequestDto = new ParticipationRequestDto();
+
+        participationRequestDto.setRequester(participationRequest.getRequesterId());
+        participationRequestDto.setId(participationRequest.getId());
+        participationRequestDto.setCreated(participationRequest.getCreated());
+        participationRequestDto.setStatus(RequestStatus.valueOf(participationRequest.getStatus().name()));
+        participationRequestDto.setEvent(participationRequest.getEventId());
+
+        return participationRequestDto;
+    }
+
     public Request toRequest(ParticipationRequestDto participationRequestDto) {
         return new Request(
                 null,
@@ -60,6 +73,15 @@ public class RequestMapper {
                 participationRequestDto.getStatus(),
                 participationRequestDto.getCreated()
         );
+    }
+
+    public Request toParticipationRequest(EventFullDto eventFullDto, User user) {
+        Request participationRequest = new Request();
+
+        participationRequest.setRequesterId(user.getId());
+        participationRequest.setEventId(eventFullDto.getId());
+
+        return participationRequest;
     }
 
     /**
@@ -84,9 +106,10 @@ public class RequestMapper {
     }
 
     private RequestStatus setStatus(EventFullDto event) {
-        if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
+        if (!event.isRequestModeration() || event.getParticipantLimit() == 0) {
             return RequestStatus.CONFIRMED;
         }
         return RequestStatus.PENDING;
     }
+
 }

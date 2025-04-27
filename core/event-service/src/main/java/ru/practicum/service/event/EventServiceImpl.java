@@ -19,17 +19,14 @@ import ru.practicum.dto.event.NewEventDto;
 import ru.practicum.dto.event.SearchEventsParamAdmin;
 import ru.practicum.dto.event.UpdateEventAdminRequest;
 import ru.practicum.dto.location.LocationDto;
-import ru.practicum.dto.request.EventRequestStatusUpdateRequest;
-import ru.practicum.dto.request.EventRequestStatusUpdateResult;
-import ru.practicum.dto.request.ParticipationRequestDto;
-import ru.practicum.dto.user.UserDto;
+import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.enums.AdminStateAction;
 import ru.practicum.enums.EventState;
-import ru.practicum.enums.RequestStatus;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.exception.ValidationException;
 import ru.practicum.mapper.event.EventMapper;
+import ru.practicum.mapper.event.UserMapper;
 import ru.practicum.mapper.event.UtilEventClass;
 import ru.practicum.mapper.location.LocationMapper;
 import ru.practicum.model.Category;
@@ -66,6 +63,7 @@ public class EventServiceImpl implements EventService {
     SearchEventRepository searchEventRepository;
     CategoryRepository categoryRepository;
     StatClient statClient;
+    UserMapper userMapper;
 
     @Autowired
     public EventServiceImpl(EventRepository eventRepository, UserServiceClient userServiceClient,
@@ -73,7 +71,7 @@ public class EventServiceImpl implements EventService {
                             EventMapper eventMapper, CategoryService categoryService, UtilEventClass utilEventClass,
                             LocationRepository locationRepository, SearchEventRepository searchEventRepository,
                             CategoryRepository categoryRepository, StatClient statClient,
-                            LocationMapper locationMapper) {
+                            LocationMapper locationMapper, UserMapper userMapper) {
         this.eventRepository = eventRepository;
         this.eventMapper = eventMapper;
         this.categoryService = categoryService;
@@ -85,6 +83,7 @@ public class EventServiceImpl implements EventService {
         this.userServiceClient = userServiceClient;
         this.requestServiceClient = requestServiceClient;
         this.locationMapper = locationMapper;
+        this.userMapper = userMapper;
     }
 
 
@@ -103,7 +102,7 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventFullDto createEvent(Long userId, NewEventDto eventDto) {
-        UserDto initializer = userServiceClient.getById(userId);
+        UserShortDto initializer = userMapper.toUserShortDto(userServiceClient.getBy(userId));
         CategoryDto category = categoryService.getCategoryById(eventDto.getCategory());
         LocationDto locationDto = eventDto.getLocation();
         Location location = locationMapper.toLocation(locationDto);
@@ -240,7 +239,7 @@ public class EventServiceImpl implements EventService {
         // Получаем количество подтвержденных заявок для каждого мероприятия
         Map<Long, Long> eventRequestCounts = new HashMap<>();
         for (Event event : events) {
-            long confirmedRequests = requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, event.getId());
+            long confirmedRequests = requestServiceClient.countAllByEventIdAndStatusIs(event.getId(), "CONFIRMED");
             eventRequestCounts.put(event.getId(), confirmedRequests);
         }
 
@@ -322,7 +321,7 @@ public class EventServiceImpl implements EventService {
         eventRepository.save(event);
 
         // Подсчет подтвержденных запросов
-        long confirmedRequests = requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, eventId);
+        long confirmedRequests = requestServiceClient.countAllByEventIdAndStatusIs(eventId, "CONFIRMED");
 
         // Создание DTO
         EventFullDto eventFullDto = utilEventClass.toEventFullDto(event);
@@ -340,7 +339,7 @@ public class EventServiceImpl implements EventService {
             hitDto.setApp("ewm-main-service");
             hitDto.setUri("/events");
             hitDto.setIp(clientIp);
-            hitDto.setTimestamp(LocalDateTime.now());
+            hitDto.setTimestamp(String.valueOf(LocalDateTime.now()));
 
             // Логируем успешный запрос
             log.info("Логируем запрос в статистику: URI={}, IP={}", hitDto.getUri(), hitDto.getIp());
@@ -358,7 +357,7 @@ public class EventServiceImpl implements EventService {
             hitDto.setApp("ewm-main-service");
             hitDto.setUri("/events/" + event.getId());
             hitDto.setIp(clientIp);
-            hitDto.setTimestamp(LocalDateTime.now());
+            hitDto.setTimestamp(String.valueOf(LocalDateTime.now()));
 
             statClient.sendHit(hitDto);
         } catch (Exception e) {
@@ -415,4 +414,24 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("updated time should be " + plusHour + "ahead then current time!", "not enough time before event");
         }
     }
+
+    @Override
+    public boolean existEventByCategoryId(Long id) {
+        return eventRepository.existsByCategoryId(id);
+    }
+
+    @Override
+    public EventFullDto findById(Long id) {
+
+        Optional<Event> event = eventRepository.findById(id);
+        if (event.isEmpty()) {
+            throw new NotFoundException("Событие с id = ", id + " не найдено");
+        }
+        EventFullDto eventFullDto = utilEventClass.toEventFullDto(event.get());
+        eventFullDto.setInitiator(userMapper.toUserShortDto(userServiceClient.getBy(event.get().getInitiatorId())));
+
+        return eventFullDto;
+    }
+
+
 }

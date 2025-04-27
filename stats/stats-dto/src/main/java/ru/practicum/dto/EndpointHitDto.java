@@ -30,7 +30,7 @@ public class EndpointHitDto {
             message = "Неверный формат IP-адреса"
     )
     String ip;
-    LocalDateTime timestamp;
+    String timestamp;
 
     /**
      * Instantiates a new Endpoint hit dto.
@@ -41,7 +41,7 @@ public class EndpointHitDto {
      * @param timestamp the timestamp
      */
 // Дополнительный конструктор без id
-    public EndpointHitDto(String app, String uri, String ip, LocalDateTime timestamp) {
+    public EndpointHitDto(String app, String uri, String ip, String timestamp) {
         this.app = app;
         this.uri = uri;
         this.ip = ip;

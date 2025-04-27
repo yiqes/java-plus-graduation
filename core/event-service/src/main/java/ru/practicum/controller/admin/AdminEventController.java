@@ -45,4 +45,6 @@ public class AdminEventController {
         log.info("==> Admin update event={} by id={}", updateEventAdminRequest, eventId);
         return eventService.updateEventByAdmin(updateEventAdminRequest, eventId);
     }
+
+
 }

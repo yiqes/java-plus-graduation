@@ -1,53 +1,71 @@
 package ru.practicum.service;
 
+import jakarta.validation.ValidationException;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.dto.*;
+import ru.practicum.dto.EndpointHitDto;
+import ru.practicum.dto.RequestParamDto;
+import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.mapper.EndpointHitMapper;
 import ru.practicum.model.EndpointHit;
 import ru.practicum.repository.EndpointHitRepository;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- * The type Stat service.
- */
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class StatServiceImpl implements StatService {
-
-    private final EndpointHitRepository endpointHitRepository;
-    private final EndpointHitMapper mapper;
+    final EndpointHitRepository hitRepository;
+    final EndpointHitMapper hitMapper;
 
     @Override
     @Transactional
-    public EndpointHitResponseDto saveInfo(EndpointHitSaveRequestDto endpointHitSaveRequestDto) {
-        EndpointHit endpointHit = mapper.toEndpointHit(endpointHitSaveRequestDto);
-        endpointHit = endpointHitRepository.save(endpointHit);
-        return mapper.toResponseDto(endpointHit);
+    public void hit(EndpointHitDto endpointHitDto) {
+        log.info("Запись {} в БД", endpointHitDto);
+        EndpointHit endpointHit = hitMapper.mapToEndpointHit(endpointHitDto);
+        hitRepository.save(endpointHit);
+        log.info("Объект {} успешно сохранен в БД", endpointHit);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
-        log.info("Получение статистики с параметрами: start={}, end={}, uris={}, unique={}", start, end, uris, unique);
-        List<ViewStatsDto> stats;
+    public List<ViewStatsDto> stats(RequestParamDto params) {
+        log.info("Запрос статистики {}", params);
 
-        if (unique) {
-            stats = uris.isEmpty() ?
-                    endpointHitRepository.findStatAllWithUniqueIp(start, end) :
-                    endpointHitRepository.findStatWithUniqueIp(start, end, uris);
-        } else {
-            stats = uris.isEmpty() ?
-                    endpointHitRepository.findStatAllWithoutUniqueIp(start, end) :
-                    endpointHitRepository.findStatWithoutUniqueIp(start, end, uris);
+        if (params.getUnique() == null) {
+            params.setUnique(false);
         }
-        log.info("Полученные статистические данные: {}", stats);
-        return new ArrayList<>(stats);
+
+        if (params.getStart().isAfter(LocalDateTime.now())) {
+            throw new ValidationException("Время начала не может быть в прошлом");
+        }
+
+        List<ViewStatsDto> statsToReturn;
+
+        boolean paramsIsNotExists = params.getUris() == null || params.getUris().isEmpty();
+
+        if (!params.getUnique()) {
+            if (paramsIsNotExists) {
+                statsToReturn = hitRepository.getAllStats(params.getStart(), params.getEnd());
+            } else {
+                statsToReturn = hitRepository.getStats(params.getUris(), params.getStart(), params.getEnd());
+            }
+        } else {
+            if (paramsIsNotExists) {
+                statsToReturn = hitRepository.getAllStatsUniqueIp(params.getStart(), params.getEnd());
+            } else {
+                statsToReturn = hitRepository.getStatsUniqueIp(params.getUris(), params.getStart(), params.getEnd());
+            }
+        }
+
+        log.info("Данные статистики {} успешно считаны из БД", statsToReturn);
+        return statsToReturn;
     }
 }

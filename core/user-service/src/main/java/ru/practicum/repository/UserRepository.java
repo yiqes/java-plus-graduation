@@ -4,6 +4,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.query.Param;
 import ru.practicum.model.User;
 
@@ -14,7 +15,7 @@ import java.util.Optional;
 /**
  * The interface User repository.
  */
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, QuerydslPredicateExecutor<User> {
 
     /**
      * Find by email optional.
@@ -37,5 +38,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> getUsersByIds(@Param("ids") List<Long> ids, PageRequest pageRequest);
 
     List<User> findAllByIdIn(List<Long> ids, Pageable pageable);
+
+
 }
 

@@ -8,6 +8,7 @@ import ru.practicum.dto.event.NewEventDto;
 import ru.practicum.dto.event.UpdateEventAdminRequest;
 import ru.practicum.dto.location.LocationDto;
 import ru.practicum.dto.user.UserDto;
+import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.enums.EventState;
 import ru.practicum.mapper.category.CategoryMapper;
 import ru.practicum.mapper.location.LocationMapper;
@@ -41,7 +42,7 @@ public class UtilEventClass {
      * @param location    the location
      * @return the event
      */
-    public Event toEventFromNewEventDto(NewEventDto newEventDto, UserDto user, CategoryDto category, Location location) {
+    public Event toEventFromNewEventDto(NewEventDto newEventDto, UserShortDto user, CategoryDto category, Location location) {
         if (newEventDto == null || user == null || category == null || location == null) {
             return null;
         }

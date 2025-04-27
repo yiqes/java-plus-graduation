@@ -22,7 +22,7 @@ public class EventShortDto {
     Integer confirmedRequests;
     String eventDate;
     Long id;
-    UserDto initiator;
+    UserShortDto initiator;
     Boolean paid;
     String title;
     Long views;

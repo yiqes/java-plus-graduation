@@ -20,7 +20,7 @@ import java.util.List;
 @Validated
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("users/{user-id}/requests")
+@RequestMapping("users/{user-id}/events/{eventId}/requests")
 public class PrivateRequestController {
 
     private final RequestService requestService;
@@ -33,12 +33,12 @@ public class PrivateRequestController {
      *
      * @param userId the user id
      * @return the request by user
-     */
-    @GetMapping
-    public List<ParticipationRequestDto> getRequestByUser(@PathVariable("user-id") Long userId) {
-        log.info("Private: get request by user {}", userId);
-        return requestService.getRequestByUserId(userId);
-    }
+//     */
+//    @GetMapping
+//    public List<ParticipationRequestDto> getRequestByUser(@PathVariable("user-id") Long userId) {
+//        log.info("Private: get request by user {}", userId);
+//        return requestService.getRequestByUserId(userId);
+//    }
 
     /**
      * Create request by user participation request dto.
@@ -68,12 +68,12 @@ public class PrivateRequestController {
         return requestService.cancelRequest(userId, requestId);
     }
 
-    @GetMapping("/{event-id}/requests")
-    public List<ParticipationRequestDto> getRequestByUserAndEvent(@PathVariable(USERID) Long userId,
-                                                                  @PathVariable(EVENTID) Long eventId) {
-        log.info("Private: get request userId {}, eventId {}", userId, eventId);
-        return requestService.getRequestByUserAndEvent(userId, eventId);
-    }
+//    @GetMapping("/{event-id}/requests")
+//    public List<ParticipationRequestDto> getRequestByUserAndEvent(@PathVariable(USERID) Long userId,
+//                                                                  @PathVariable(EVENTID) Long eventId) {
+//        log.info("Private: get request userId {}, eventId {}", userId, eventId);
+//        return requestService.getRequestByUserAndEvent(userId, eventId);
+//    }
 
     @PatchMapping("/{event-id}/requests")
     public EventRequestStatusUpdateResult requestUpdateStatus(@PathVariable(USERID) Long userId,
@@ -81,6 +81,17 @@ public class PrivateRequestController {
                                                               @RequestBody @Valid EventRequestStatusUpdateRequest eventDto) {
         log.info("Private: patch request status {}", eventDto);
         return requestService.requestUpdateStatus(userId, eventId, eventDto);
+    }
+
+    @GetMapping
+    List<ParticipationRequestDto> getReceivedBy(@PathVariable long userId, @PathVariable long eventId) {
+        return requestService.getReceivedBy(userId, eventId);
+    }
+
+    @PatchMapping
+    EventRequestStatusUpdateResult update(@PathVariable("userId") long userId, @PathVariable("eventId") long eventId,
+                                          @RequestBody EventRequestStatusUpdateRequest updateRequest) {
+        return requestService.update(userId, eventId, updateRequest);
     }
 
 }

@@ -1,6 +1,7 @@
 package ru.practicum.service;
 
 
+import com.querydsl.core.BooleanBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -9,10 +10,13 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.controller.AdminUsersGetAllParams;
 import ru.practicum.dto.user.NewUserRequest;
 import ru.practicum.dto.user.UserDto;
+import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.mapper.NewUserMapper;
 import ru.practicum.mapper.UserMapper;
+import ru.practicum.mapper.UserShortMapper;
+import ru.practicum.model.QUser;
 import ru.practicum.model.User;
 import ru.practicum.repository.UserRepository;
 
@@ -20,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * The type User service.
@@ -31,12 +36,14 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final NewUserMapper newUserRequestMapper;
     private final UserMapper userMapper;
+    private final UserShortMapper userShortMapper;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, NewUserMapper newUserRequestMapper, UserMapper userMapper) {
+    public UserServiceImpl(UserRepository userRepository, NewUserMapper newUserRequestMapper, UserMapper userMapper, UserShortMapper userShortMapper) {
         this.userRepository = userRepository;
         this.newUserRequestMapper = newUserRequestMapper;
         this.userMapper = userMapper;
+        this.userShortMapper = userShortMapper;
     }
 
     @Override
@@ -82,10 +89,18 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public Map<Long, UserDto> getByIds(List<Long> userIds) {
-        return userRepository.findAllById(userIds)
-                .stream()
-                .collect(Collectors.toMap(User::getId, userMapper::toUserDto));
+    public Map<Long, UserShortDto> getByIds(List<Long> userIds) {
+        BooleanBuilder booleanBuilder = new BooleanBuilder();
+
+        if (userIds != null && !userIds.isEmpty()) {
+            booleanBuilder.and(QUser.user.id.in(userIds));
+        }
+        return StreamSupport
+                .stream(userRepository.findAll(booleanBuilder).spliterator(), false)
+                .collect(Collectors.toMap(
+                        User::getId,
+                        userShortMapper::toUserShortDto
+                ));
     }
 
     @Override

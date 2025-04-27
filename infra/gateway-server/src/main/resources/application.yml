@@ -52,6 +52,12 @@ spring:
           predicates:
             - Path=/users/{userId}/events/{eventId}/requests, /users/{userId}/requests/**, /requests/**
 
+        - id: comments-service_route
+          uri: lb://user-service
+          predicates:
+            - Path=/comment/**
+            - Path=/admin/comment/**
+
 eureka:
   client:
     serviceUrl:

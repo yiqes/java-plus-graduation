@@ -98,5 +98,8 @@ public interface EventService {
      */
     EventFullDto getEventById(Long id, String clientIp);
 
+    boolean existEventByCategoryId(Long id);
+
+    EventFullDto findById(Long id);
 }
 
