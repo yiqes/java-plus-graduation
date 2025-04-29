@@ -2,16 +2,17 @@ package ru.practicum.mapper.comment;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import ru.practicum.client.EventServiceClient;
 import ru.practicum.client.UserServiceClient;
 import ru.practicum.dto.comment.CommentFullDto;
 import ru.practicum.dto.comment.NewCommentDto;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.mapper.event.EventMapper;
-import ru.practicum.mapper.event.UtilEventClass;
 import ru.practicum.model.Comment;
 import ru.practicum.model.Event;
 import ru.practicum.repository.CommentRepository;
 import ru.practicum.repository.EventRepository;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -25,12 +26,10 @@ public class UtilCommentClass {
     private final CommentRepository commentRepository;
     private final UserServiceClient userServiceClient;
     private final EventRepository eventRepository;
-
-    private final UtilEventClass utilEventClass;
+    private final EventMapper eventMapper;
+    private final EventServiceClient eventServiceClient;
 
     private final CommentMapper commentMapper;
-
-    private final EventMapper eventMapper;
 
 
     /**
@@ -75,7 +74,7 @@ public class UtilCommentClass {
         CommentFullDto dto = new CommentFullDto();
         dto.setId(comment.getId());
         dto.setAuthor(userServiceClient.getById(comment.getAuthorId()));
-        dto.setEvent(utilEventClass.toEventFullDto(comment.getEvent()));
+        dto.setEvent(eventServiceClient.getById(comment.getEvent().getId()));
         dto.setText(comment.getText());
         dto.setCreated(comment.getCreated().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         dto.setUpdated(comment.getUpdated().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
@@ -106,6 +105,7 @@ public class UtilCommentClass {
         if (dto.getParentComment() != null) {
             Comment parentComment = commentRepository.findById(dto.getParentComment().getId())
                     .orElseThrow(() -> new NotFoundException("Parent comment not found", ""));
+
             comment.setParent(parentComment);
         }
 

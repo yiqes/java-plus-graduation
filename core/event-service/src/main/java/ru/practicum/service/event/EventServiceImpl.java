@@ -407,6 +407,4 @@ public class EventServiceImpl implements EventService {
         savedEvent.setInitiatorId(userServiceClient.getById(savedEvent.getInitiatorId()).getId());
         return utilEventClass.toEventFullDto(savedEvent);
     }
-
-
 }

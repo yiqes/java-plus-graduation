@@ -12,7 +12,7 @@ public interface EventServiceClient {
     @GetMapping(path = "/internal/exist")
     boolean existEventByCategoryId(@RequestParam("categoryId") Long id);
 
-    @GetMapping(path = "/internal")
+    @GetMapping(path = "/internal/")
     EventFullDto findById(@RequestParam("eventId") Long eventId);
 
     @GetMapping("/internal/events/{eventId}")

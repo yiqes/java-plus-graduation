@@ -31,12 +31,12 @@ public class AdminCompilationController {
      */
     @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
-    CompilationDto add(@RequestBody @Valid CompilationDto newCompilationDto) {
+    CompilationDto add(@RequestBody @Valid NewCompilationDto newCompilationDto) {
         log.info("==> Admin add by newCompilationDto = {}", newCompilationDto);
-        //CompilationDto compilationDto = compilationService.add(newCompilationDto);
+        CompilationDto compilationDto = compilationService.add(newCompilationDto);
         log.info("<== Admin add result: {}", newCompilationDto);
 
-        return newCompilationDto;
+        return compilationDto;
     }
 
     /**
