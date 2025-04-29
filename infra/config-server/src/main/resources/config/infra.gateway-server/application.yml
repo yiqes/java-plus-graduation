@@ -1,0 +1,90 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        # User Service Routes
+        - id: user-service-admin
+          uri: lb://user-service
+          predicates:
+            - Path=/admin/users/{segment}
+            - Path=/admin/users
+            - Method=DELETE, POST, GET
+
+        # Request Service Routes
+        - id: request-service-user-requests
+          uri: lb://request-service
+          predicates:
+            - Path=/users/{user-id}/requests{,/**}
+            - Method=GET,POST,PATCH
+
+        - id: request-service-event-requests
+          uri: lb://request-service
+          predicates:
+            - Path=/events/{event-id}/requests{,/**}
+            - Method=GET,PATCH
+
+        # Event Service Admin Routes
+        - id: event-service-admin-categories
+          uri: lb://event-service
+          predicates:
+            - Path=/admin/categories{,/**}
+            - Method=DELETE,PATCH
+
+        - id: event-service-admin-comment
+          uri: lb://event-service
+          predicates:
+            - Path=/admin/comment{,/**}
+            - Method=GET,DELETE
+
+        - id: event-service-admin-compilations
+          uri: lb://event-service
+          predicates:
+            - Path=/admin/compilations{,/**}
+            - Method=DELETE,PATCH
+
+        - id: event-service-admin-events
+          uri: lb://event-service
+          predicates:
+            - Path=/admin/events/{event-id}
+            - Method=PATCH
+
+        # Event Service Public Routes
+        - id: event-service-comments
+          uri: lb://event-service
+          predicates:
+            - Path=/comment{,/**}
+            - Method=GET,POST,DELETE
+
+        - id: event-service-user-events
+          uri: lb://event-service
+          predicates:
+            - Path=/users/{user-id}/events{,/**}
+            - Method=GET,PATCH
+
+        - id: event-service-categories
+          uri: lb://event-service
+          predicates:
+            - Path=/categories{,/**}
+
+        - id: event-service-compilations
+          uri: lb://event-service
+          predicates:
+            - Path=/compilations{,/**}
+
+        - id: event-service-events
+          uri: lb://event-service
+          predicates:
+            - Path=/events{,/**}
+
+        # Fallback route для оставшихся запросов
+        - id: fallback-route
+          uri: lb://event-service
+          predicates:
+            - Path=/**
+
+logging:
+  level:
+    org.springframework.cloud.gateway: TRACE

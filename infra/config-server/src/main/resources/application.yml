@@ -4,16 +4,23 @@ server:
 spring:
   application:
     name: config-server
+  profiles:
+    active: native
   cloud:
     config:
       server:
-        git:
-          uri: https://github.com/yiqes/config-repo.git # URI репозитория Git-репозитория
-          default-label: main # Ветка репозитория
+        native:
+          searchLocations:
+            - classpath:config/core/{application}
+            - classpath:config/infra/{application}
+            - classpath:config/stats/{application}
 
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://discovery-server:8761/eureka
+      defaultZone: http://localhost:8761/eureka/
   instance:
-    instance-id: ${spring.application.name}:${random.value}
+    preferIpAddress: true
+    hostname: localhost
+    instance-id: "${spring.application.name}:${server.port}"
+    leaseRenewalIntervalInSeconds: 10

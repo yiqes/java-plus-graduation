@@ -1,0 +1,29 @@
+server:
+  port: 9090
+
+logging:
+  level:
+    org:
+      springframework:
+        orm:
+          jpa: INFO
+        transaction:
+          interceptor: TRACE
+        JpaTransactionManager: DEBUG
+      hibernate:
+        SQL: DEBUG
+        type.descriptor.sql.BasicBinder: TRACE
+management:
+  endpoints:
+    web:
+      exposure:
+        include: 'health'
+  endpoint:
+    health:
+      enabled: true
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://discovery-server:8761/eureka
+  instance:
+    instance-id: ${spring.application.name}:${random.value}
