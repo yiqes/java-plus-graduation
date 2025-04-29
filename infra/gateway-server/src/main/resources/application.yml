@@ -4,6 +4,8 @@ spring:
   application:
     name: gateway-server
   cloud:
+    config:
+      enabled: false
     gateway:
       routes:
         - id: user-service_route
