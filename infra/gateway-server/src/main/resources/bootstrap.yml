@@ -2,113 +2,29 @@ spring:
   main:
     web-application-type: reactive
   application:
-    name: gateway-server
+    name: gateway
+  config:
+    import: optional:configserver:http://config-server:9091
   cloud:
-    gateway:
-      routes:
-        - id: user-service_route
-          uri: lb://user-service
-          predicates:
-            - Path=/users ,/admin/users,/admin/users/{userId}
-        - id: event_service_route
-          uri: lb://event-service
-          predicates:
-            - Path=/events/**,/admin/events/**,/users/{userId}/events,/users/{userId}/events/{eventId},/users/{userId}/events/{eventId}/likes/**
-        - id: event_service_route_compilation
-          uri: lb://event-service
-          predicates:
-            - Path=/compilations/**,/admin/compilations/**
-        - id: event_service_route_categories
-          uri: lb://event-service
-          predicates:
-            - Path=/categories/**,/admin/categories/**
-        - id: request_service_route
-          uri: lb://request-service
-          predicates:
-            - Path=/users/{userId}/requests/**, /users/{userId}/events/{eventId}/requests
-        # User Service Routes
-        - id: user-service-admin
-          uri: lb://user-service
-          predicates:
-            - Path=/admin/users/{segment}
-            - Path=/admin/users
-            - Method=DELETE, POST, GET
-
-        # Request Service Routes
-        - id: request-service-user-requests
-          uri: lb://request-service
-          predicates:
-            - Path=/users/{user-id}/requests, /users/{user-id}/requests/**
-            - Method=GET,POST,PATCH
-
-        - id: request-service-event-requests
-          uri: lb://request-service
-          predicates:
-            - Path=/events/{event-id}/requests, /events/{event-id}/requests/**
-            - Method=GET,PATCH
-
-        # Event Service Admin Routes
-        - id: event-service-admin-categories
-          uri: lb://event-service
-          predicates:
-            - Path=/admin/categories, /admin/categories/**
-            - Method=DELETE,PATCH
-
-        - id: event-service-admin-comment
-          uri: lb://event-service
-          predicates:
-            - Path=/admin/comment
-            - Method=GET,DELETE
-
-        - id: event-service-admin-compilations
-          uri: lb://event-service
-          predicates:
-            - Path=/admin/compilations
-            - Method=DELETE,PATCH
-
-        - id: event-service-admin-events
-          uri: lb://event-service
-          predicates:
-            - Path=/admin/events/{event-id}
-            - Method=PATCH
-
-        # Event Service Public Routes
-        - id: event-service-comments
-          uri: lb://event-service
-          predicates:
-            - Path=/comment
-            - Method=GET,POST,DELETE
-
-        - id: event-service-user-events
-          uri: lb://event-service
-          predicates:
-            - Path=/users/{user-id}/events
-            - Method=GET,PATCH
-
-        - id: event-service-categories
-          uri: lb://event-service
-          predicates:
-            - Path=/categories
-
-        - id: event-service-compilations
-          uri: lb://event-service
-          predicates:
-            - Path=/compilations
-
-        - id: event-service-events
-          uri: lb://event-service
-          predicates:
-            - Path=/events
-
-        # Fallback route для оставшихся запросов
-        - id: fallback-route
-          uri: lb://event-service
-          predicates:
-            - Path=/**
+    config:
+      fail-fast: true
+      retry:
+        useRandomPolicy: true
+        max-interval: 6000
+      discovery:
+        enabled: true
+        service-id: config-server
 
 eureka:
   client:
+    register-with-eureka: true
+    fetch-registry: true
     serviceUrl:
-      defaultZone: http://discovery-server:8761/eureka
+      defaultZone: http://${eureka.instance.hostname:localhost}:${eureka.instance.port:8761}/eureka/
   instance:
-    instance-id: ${spring.application.name}:${random.value}
+    prefer-ip-address: true
+    hostname: localhost
+    instance-id: "${spring.application.name}:${random.value}"
+    lease-renewal-interval-in-seconds: 10
+server:
+  port: 0
