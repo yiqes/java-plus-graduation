@@ -104,7 +104,3 @@ spring:
           uri: lb://event-service
           predicates:
             - Path=/**
-
-logging:
-  level:
-    org.springframework.cloud.gateway: TRACE
