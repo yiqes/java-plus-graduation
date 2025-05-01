@@ -54,6 +54,7 @@ public class Event {
     @Enumerated(EnumType.STRING)
     EventState state;
     String title;
+    @Transient
     Long views;
     @Transient
     Long likes;

@@ -314,7 +314,7 @@ public class EventServiceImpl implements EventService {
         saveEventRequestToStats(event, clientIp);
 
         // Получение количества просмотров из статистики
-        long views = getViewsFromStats(event);
+        long views = getViewsFromStats(event) + 1;
 
         event.setViews(views);
         eventRepository.save(event);
