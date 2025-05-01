@@ -67,7 +67,7 @@ public class RequestMapper {
         if (userId == null || eventId == null) {
             return null;
         }
-        if (userServiceClient.getById(userId).equals(null) || eventServiceClient.findById(eventId).equals(null)) {
+        if (userServiceClient.getById(userId).equals(null) || eventServiceClient.getById(eventId).equals(null)) {
             return null;
         }
 
@@ -81,7 +81,7 @@ public class RequestMapper {
     }
 
     private RequestStatus setStatus(Long eventId) {
-        if (!eventServiceClient.findById(eventId).isRequestModeration() || eventServiceClient.findById(eventId).getParticipantLimit() == 0) {
+        if (!eventServiceClient.getById(eventId).isRequestModeration() || eventServiceClient.getById(eventId).getParticipantLimit() == 0) {
             return RequestStatus.CONFIRMED;
         }
         return RequestStatus.PENDING;

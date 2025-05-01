@@ -47,7 +47,7 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
      * @param id     the id
      * @return the integer
      */
-    Integer countByStatusAndEventId(RequestStatus status, Long id);
+    Long countByStatusAndEventId(RequestStatus status, Long id);
 
     @Query(value = """
             select EVENT_ID, COUNT(*) as EVENT_COUNT

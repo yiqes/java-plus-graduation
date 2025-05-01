@@ -114,3 +114,6 @@ eureka:
       defaultZone: http://discovery-server:8761/eureka
   instance:
     instance-id: ${spring.application.name}:${random.value}
+
+server:
+  port: 8080

@@ -153,7 +153,7 @@ public class UtilEventClass {
         eventFullDto.setAnnotation(event.getAnnotation());
         eventFullDto.setCategory(categoryMapper.toCategoryDto(event.getCategory()));
         eventFullDto.setConfirmedRequests(event.getConfirmedRequests());
-        eventFullDto.setCreateOn(event.getCreatedOn().format(formatter));
+        eventFullDto.setCreatedOn(event.getCreatedOn().format(formatter));
         eventFullDto.setDescription(event.getDescription());
         eventFullDto.setId(event.getId());
         eventFullDto.setInitiator(userServiceClient.getById(event.getInitiatorId()));

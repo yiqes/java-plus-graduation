@@ -14,6 +14,8 @@ import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.dto.category.CategoryDto;
 import ru.practicum.dto.event.*;
+import ru.practicum.dto.request.EventRequestStatusUpdateResult;
+import ru.practicum.dto.request.ParticipationRequestDto;
 import ru.practicum.enums.AdminStateAction;
 import ru.practicum.enums.EventState;
 import ru.practicum.enums.RequestStatus;
@@ -151,7 +153,19 @@ public class EventServiceImpl implements EventService {
                 .size(size)
                 .build();
         List<Event> events = searchEventRepository.getEventsByParamForAdmin(searchEventsParamAdmin);
-        return events.stream().map(utilEventClass::toEventFullDto).collect(Collectors.toList());
+
+//        for (Event event : events) {
+//            long count = requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, event.getId());
+//            event.setConfirmedRequests(count);
+//        }
+        for (Event event : events) {
+            event.setConfirmedRequests(requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, event.getId()));
+        }
+
+
+        return events.stream()
+                .map(utilEventClass::toEventFullDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -224,7 +238,7 @@ public class EventServiceImpl implements EventService {
         // Получаем количество подтвержденных заявок для каждого мероприятия
         Map<Long, Long> eventRequestCounts = new HashMap<>();
         for (Event event : events) {
-            long confirmedRequests = requestServiceClient.countAllByEventIdAndStatusIs(event.getId(), RequestStatus.CONFIRMED.toString());
+            long confirmedRequests = requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, event.getId());
             eventRequestCounts.put(event.getId(), confirmedRequests);
         }
 
@@ -306,7 +320,7 @@ public class EventServiceImpl implements EventService {
         eventRepository.save(event);
 
         // Подсчет подтвержденных запросов
-        long confirmedRequests = requestServiceClient.countAllByEventIdAndStatusIs(eventId, RequestStatus.CONFIRMED.toString());
+        long confirmedRequests = requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, eventId);
 
         // Создание DTO
         EventFullDto eventFullDto = utilEventClass.toEventFullDto(event);
@@ -407,4 +421,36 @@ public class EventServiceImpl implements EventService {
         savedEvent.setInitiatorId(userServiceClient.getById(savedEvent.getInitiatorId()).getId());
         return utilEventClass.toEventFullDto(savedEvent);
     }
+
+//    private EventRequestStatusUpdateResult requestUpdateVerification(Long eventId, List<ParticipationRequestDto> requestList, RequestStatus status) {
+//        EventRequestStatusUpdateResult result = new EventRequestStatusUpdateResult();
+//        List<ParticipationRequestDto> confirmedRequests = new ArrayList<>();
+//        List<ParticipationRequestDto> rejectedRequests = new ArrayList<>();
+//
+//        for (ParticipationRequestDto request : requestList) {
+//            if (request.getStatus() != RequestStatus.PENDING) {
+//                throw new ConflictException("You can only change the status of pending applications", "");
+//            }
+//            long count = requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, eventId);
+//
+//            Long event = request.getEvent();
+//            if (count >= eventRepository.findById(event).get().getParticipantLimit()) {
+//                throw new ConflictException("The event with id=" + event +
+//                        " has reached the limit of participation requests", "");
+//            }
+//            if (request.getEvent().equals(eventId)) {
+//                request.setStatus(status);
+//
+//            }
+//        }
+//        result.setConfirmedRequests(confirmedRequests);
+//        result.setRejectedRequests(rejectedRequests);
+//
+//        Long count = requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, eventId);
+//        Event event = eventRepository.getReferenceById(eventId);
+//        event.setConfirmedRequests(count);
+//        eventRepository.save(event);
+//
+//        return result;
+//    }
 }

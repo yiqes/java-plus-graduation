@@ -22,7 +22,7 @@ public class EventFullDto {
     CategoryDto category;
     Long confirmedRequests;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", shape = JsonFormat.Shape.STRING)
-    String createOn;
+    String createdOn;
     String description;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", shape = JsonFormat.Shape.STRING)
     String eventDate;

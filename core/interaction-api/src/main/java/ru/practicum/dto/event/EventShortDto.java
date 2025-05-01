@@ -18,7 +18,7 @@ import ru.practicum.dto.user.UserShortDto;
 public class EventShortDto {
     String annotation;
     CategoryDto category;
-    Integer confirmedRequests;
+    Long confirmedRequests;
     String eventDate;
     Long id;
     UserShortDto initiator;

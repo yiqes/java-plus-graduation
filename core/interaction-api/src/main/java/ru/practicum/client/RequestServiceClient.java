@@ -9,7 +9,7 @@ import ru.practicum.enums.RequestStatus;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "request-service", path = "/requests")
+@FeignClient(name = "request-service")
 public interface RequestServiceClient {
     @GetMapping(path = "/internal/count")
     long countAllByEventIdAndStatusIs(@RequestParam("eventId") long eventId,
@@ -24,4 +24,7 @@ public interface RequestServiceClient {
     @GetMapping("/internal/requests/count")
     Map<Long, Long> countByStatusAndEventsIds(
             @RequestParam RequestStatus status, @RequestParam List<Long> eventsIds);
+
 }
+
+

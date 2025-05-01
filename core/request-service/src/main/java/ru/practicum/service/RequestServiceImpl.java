@@ -11,6 +11,7 @@ import ru.practicum.dto.request.EventRequestStatusUpdateResult;
 import ru.practicum.dto.request.ParticipationRequestDto;
 import ru.practicum.enums.RequestStatus;
 import ru.practicum.exception.ConflictException;
+import ru.practicum.exception.NotFoundException;
 import ru.practicum.mapper.RequestMapper;
 import ru.practicum.model.Request;
 import ru.practicum.repository.RequestRepository;
@@ -50,7 +51,14 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public ParticipationRequestDto cancelRequest(Long userId, Long requestId) {
-        return null;
+        userServiceClient.getById(userId);
+        Request request = requestRepository.findById(requestId).orElseThrow(
+                () -> new NotFoundException("Object with id=" + requestId + " was not found!", "")
+        );
+        request.setStatus(RequestStatus.CANCELED);
+        request = requestRepository.save(request);
+
+        return requestMapper.toParticipationRequestDto(request);
     }
 
     private void requestToEventVerification(Long userId, Long eventId) {
@@ -61,16 +69,16 @@ public class RequestServiceImpl implements RequestService {
             throw new ConflictException("User with id=" + userId +
                     " has already made a request for participation in the eventId with id=" + eventId, "");
         }
-        if (userId == eventServiceClient.findById(eventId).getInitiator().getId() && eventServiceClient.findById(eventId).getInitiator() != null) {
+        if (userId == eventServiceClient.getById(eventId).getInitiator().getId() && eventServiceClient.getById(eventId).getInitiator() != null) {
             throw new ConflictException("Initiator of eventId with id=" + userId +
                     " cannot add request for participation in his own eventId", "");
         }
-        if (eventServiceClient.findById(eventId).getPublishedOn() == null) {
+        if (eventServiceClient.getById(eventId).getPublishedOn() == null) {
             throw new ConflictException("", "You cannot participate in an unpublished eventId id=" + eventId);
         }
-        if (eventServiceClient.findById(eventId).getParticipantLimit() != 0) {
+        if (eventServiceClient.getById(eventId).getParticipantLimit() != 0) {
             long countRequests = requestRepository.countByStatusAndEventId(RequestStatus.CONFIRMED, eventId);
-            if (countRequests >= eventServiceClient.findById(eventId).getParticipantLimit()) {
+            if (countRequests >= eventServiceClient.getById(eventId).getParticipantLimit()) {
                 throw new ConflictException("The eventId with id=" + eventId + " has reached the limit of participation requests", "");
             }
         }
@@ -101,10 +109,10 @@ public class RequestServiceImpl implements RequestService {
             if (request.getStatus() != RequestStatus.PENDING) {
                 throw new ConflictException("You can only change the status of pending applications", "");
             }
-            int count = requestRepository.countByStatusAndEventId(RequestStatus.CONFIRMED, eventId);
+            long count = requestRepository.countByStatusAndEventId(RequestStatus.CONFIRMED, eventId);
 
             Long secondaryEventId = request.getEventId();
-            if (count >= eventServiceClient.findById(secondaryEventId).getParticipantLimit()) {
+            if (count >= eventServiceClient.getById(secondaryEventId).getParticipantLimit()) {
                 throw new ConflictException("The secondaryEventId with id=" + secondaryEventId +
                         " has reached the limit of participation requests", "");
             }
@@ -121,10 +129,6 @@ public class RequestServiceImpl implements RequestService {
         }
         result.setConfirmedRequests(confirmedRequests);
         result.setRejectedRequests(rejectedRequests);
-
-//        Integer count = requestRepository.countByStatusAndEventId(RequestStatus.CONFIRMED, eventId);
-//        event.setConfirmedRequests(count);
-//        eventRepository.save(event);
 
         return result;
     }
