@@ -7,11 +7,16 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventShortDto;
+import ru.practicum.exception.IncorrectValueException;
 import ru.practicum.exception.ValidationException;
+import ru.practicum.service.event.EventSearchParams;
 import ru.practicum.service.event.EventService;
+import ru.practicum.service.event.PublicSearchParams;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static ru.practicum.constant.Constant.PATTERN_DATE;
 
 /**
  * The type Public event controller.
@@ -32,40 +37,46 @@ public class PublicEventController {
      * @param rangeStart    the range start
      * @param rangeEnd      the range end
      * @param onlyAvailable the only available
-     * @param sort          the sort
      * @param from          the from
      * @param size          the size
-     * @param request       the request
      * @return the events
      */
     @GetMapping
-    public List<EventShortDto> getEvents(
+    public List<EventShortDto> getAll(
             @RequestParam(required = false) String text,
             @RequestParam(required = false) List<Long> categories,
             @RequestParam(required = false) Boolean paid,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
+            @RequestParam(required = false) @DateTimeFormat(pattern = PATTERN_DATE) LocalDateTime rangeStart,
+            @RequestParam(required = false) @DateTimeFormat(pattern = PATTERN_DATE) LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "false") Boolean onlyAvailable,
-            @RequestParam(required = false) String sort,
-            @RequestParam(defaultValue = "0") int from,
-            @RequestParam(defaultValue = "10") int size,
-            HttpServletRequest request) {
-        // Валидация диапазона дат
+            @RequestParam(defaultValue = "0") Integer from,
+            @RequestParam(defaultValue = "10") Integer size,
+            HttpServletRequest httpRequest) {
+        log.info("==> GET /events Public searching events with params: " +
+                        "text {}, categories: {}, paid {}, rangeStart: {}, rangeEnd: {}, available {}, from: {}, size: {}",
+                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, from, size);
+
         if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
-            throw new ValidationException("Дата начала rangeStart не может быть позже даты окончания rangeEnd", "");
+            throw new IncorrectValueException("rangeStart of event can't be after rangeEnd");
         }
 
-        // Валидация параметров пагинации
-        if (from < 0 || size <= 0) {
-            throw new ValidationException("Параметры пагинации 'from' и 'size' должны быть >= 0 и > 0 соответственно", "");
-        }
+        EventSearchParams eventSearchParams = new EventSearchParams();
+        PublicSearchParams publicSearchParams = new PublicSearchParams();
+        publicSearchParams.setText(text);
+        publicSearchParams.setCategories(categories);
+        publicSearchParams.setPaid(paid);
 
-        String clientIp = request.getRemoteAddr();
+        publicSearchParams.setRangeStart(rangeStart);
+        publicSearchParams.setRangeEnd(rangeEnd);
 
-        log.info("==> GET /events: text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={}",
-                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
+        eventSearchParams.setPublicSearchParams(publicSearchParams);
+        eventSearchParams.setFrom(from);
+        eventSearchParams.setSize(size);
 
-        return eventService.getEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size, clientIp);
+        List<EventShortDto> eventShortDtoList = eventService.getAllByPublic(eventSearchParams);
+        log.info("<== GET /events Returning public searching events. List size: {}",
+                eventShortDtoList.size());
+        return eventShortDtoList;
     }
 
     /**

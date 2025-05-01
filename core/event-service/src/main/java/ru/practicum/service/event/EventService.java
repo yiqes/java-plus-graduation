@@ -1,5 +1,6 @@
 package ru.practicum.service.event;
 
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventShortDto;
 import ru.practicum.dto.event.NewEventDto;
@@ -99,6 +100,9 @@ public interface EventService {
     EventFullDto getEventById(Long id, String clientIp);
 
     EventFullDto getByIdInternal(long eventId);
+
+    @Transactional(readOnly = true)
+    List<EventShortDto> getAllByPublic(EventSearchParams searchParams);
 }
 
 

@@ -55,4 +55,6 @@ public class Event {
     EventState state;
     String title;
     Long views;
+    @Transient
+    Long likes;
 }

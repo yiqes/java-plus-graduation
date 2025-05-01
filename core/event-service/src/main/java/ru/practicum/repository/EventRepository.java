@@ -3,6 +3,7 @@ package ru.practicum.repository;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.query.Param;
 import ru.practicum.model.Event;
 
@@ -14,7 +15,7 @@ import java.util.Set;
 /**
  * The interface Event repository.
  */
-public interface EventRepository extends JpaRepository<Event, Long> {
+public interface EventRepository extends JpaRepository<Event, Long>, QuerydslPredicateExecutor<Event> {
 
     /**
      * Find by id in set.
@@ -73,4 +74,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                               @Param("paid") Boolean paid,
                               @Param("rangeStart") LocalDateTime rangeStart,
                               @Param("rangeEnd") LocalDateTime rangeEnd);
+
+    @Query(value = "SELECT COUNT(*) FROM LIKES_EVENTS WHERE EVENT_ID = :eventId", nativeQuery = true)
+    long countLikesByEventId(Long eventId);
 }

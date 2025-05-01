@@ -1,10 +1,12 @@
 package ru.practicum.service.event;
 
+import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.StatClient;
@@ -14,8 +16,6 @@ import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.dto.category.CategoryDto;
 import ru.practicum.dto.event.*;
-import ru.practicum.dto.request.EventRequestStatusUpdateResult;
-import ru.practicum.dto.request.ParticipationRequestDto;
 import ru.practicum.enums.AdminStateAction;
 import ru.practicum.enums.EventState;
 import ru.practicum.enums.RequestStatus;
@@ -35,6 +35,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static ru.practicum.constant.Constant.PATTERN_DATE;
+import static ru.practicum.model.QEvent.event;
+
 /**
  * The type Event service.
  */
@@ -46,6 +49,7 @@ public class EventServiceImpl implements EventService {
     private final UserServiceClient userServiceClient;
 
     private final LocationMapper locationMapper;
+    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(PATTERN_DATE);
 
     EventRepository eventRepository;
     RequestServiceClient requestServiceClient;
@@ -416,5 +420,78 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException("Event with id ", eventId + " not found"));
         savedEvent.setInitiatorId(userServiceClient.getById(savedEvent.getInitiatorId()).getId());
         return utilEventClass.toEventFullDto(savedEvent);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<EventShortDto> getAllByPublic(EventSearchParams searchParams) {
+
+        Pageable page = PageRequest.of(searchParams.getFrom(), searchParams.getSize());
+
+        BooleanExpression booleanExpression = event.isNotNull();
+
+        PublicSearchParams publicSearchParams = searchParams.getPublicSearchParams();
+
+        if (publicSearchParams.getText() != null) { //наличие поиска по тексту
+            booleanExpression = booleanExpression.andAnyOf(
+                    event.annotation.likeIgnoreCase(publicSearchParams.getText()),
+                    event.description.likeIgnoreCase(publicSearchParams.getText())
+            );
+        }
+
+        if (publicSearchParams.getCategories() != null) { // наличие поиска по категориям
+            booleanExpression = booleanExpression.and(
+                    event.category.id.in((publicSearchParams.getCategories())));
+        }
+
+        if (publicSearchParams.getPaid() != null) { // наличие поиска по категориям
+            booleanExpression = booleanExpression.and(
+                    event.paid.eq(publicSearchParams.getPaid()));
+        }
+
+        LocalDateTime rangeStart = publicSearchParams.getRangeStart();
+        LocalDateTime rangeEnd = publicSearchParams.getRangeEnd();
+
+        if (rangeStart != null && rangeEnd != null) { // наличие поиска дате события
+            booleanExpression = booleanExpression.and(
+                    event.eventDate.between(rangeStart, rangeEnd)
+            );
+        } else if (rangeStart != null) {
+            booleanExpression = booleanExpression.and(
+                    event.eventDate.after(rangeStart)
+            );
+            rangeEnd = rangeStart.plusYears(100);
+        } else if (publicSearchParams.getRangeEnd() != null) {
+            booleanExpression = booleanExpression.and(
+                    event.eventDate.before(rangeEnd)
+            );
+            rangeStart = LocalDateTime.parse(LocalDateTime.now().format(dateTimeFormatter), dateTimeFormatter);
+        }
+
+        if (rangeEnd == null && rangeStart == null) {
+            booleanExpression = booleanExpression.and(
+                    event.eventDate.after(LocalDateTime.now())
+            );
+            rangeStart = LocalDateTime.parse(LocalDateTime.now().format(dateTimeFormatter), dateTimeFormatter);
+            rangeEnd = rangeStart.plusYears(100);
+        }
+
+        List<Event> eventListBySearch = eventListBySearch =
+                eventRepository.findAll(booleanExpression, page).stream().toList();
+
+
+        for (Event event : eventListBySearch) {
+
+            Long view = 0L;
+
+            event.setViews(view);
+            event.setConfirmedRequests(
+                    requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, event.getId()));
+            event.setLikes(eventRepository.countLikesByEventId(event.getId()));
+        }
+
+        return eventListBySearch.stream()
+                .map(eventMapper::toEventShortDto)
+                .toList();
     }
 }
