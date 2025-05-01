@@ -29,10 +29,6 @@ public class UtilEventClass {
 
     private final CategoryService categoryService;
 
-    //private final UserMapper userMapper;
-
-    //private final UserShortMapper userShortMapper;
-
     private final LocationMapper locationMapper;
 
     private final UserServiceClient userServiceClient;
