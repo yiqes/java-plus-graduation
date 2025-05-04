@@ -16,16 +16,16 @@ import java.util.Map;
 public class InternalUserController {
     private final UserService userService;
 
-    @GetMapping("/{userId}")
-    public UserDto getById(@PathVariable long userId) {
+    @GetMapping("/{user-id}")
+    public UserDto getById(@PathVariable("user-id") long userId) {
         log.info("|| ==> GET Getting user by id: {}", userId);
         UserDto userDto = userService.getById(userId);
         log.info("|| <== GET Returning user: {}", userDto);
         return userDto;
     }
 
-    @GetMapping("/{userId}/check")
-    public void checkExistence(@PathVariable long userId) {
+    @GetMapping("/{user-id}/check")
+    public void checkExistence(@PathVariable("user-id") long userId) {
         log.info("==> GET. Checking exist for User: {}", userId);
         userService.checkExistence(userId);
         log.info("|==| GET. User exist: {}", true);

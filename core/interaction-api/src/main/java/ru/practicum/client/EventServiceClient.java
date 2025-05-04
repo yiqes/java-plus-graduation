@@ -10,12 +10,12 @@ import ru.practicum.dto.event.EventFullDto;
 public interface EventServiceClient {
 
     @GetMapping(path = "/internal/exist")
-    boolean existEventByCategoryId(@RequestParam("categoryId") Long id);
+    boolean existEventByCategoryId(@RequestParam("category-id") Long id);
 
     @GetMapping(path = "/internal/")
-    EventFullDto findById(@RequestParam("eventId") Long eventId);
+    EventFullDto findById(@RequestParam("event-id") Long eventId);
 
-    @GetMapping("/internal/events/{eventId}")
-    EventFullDto getById(@PathVariable long eventId);
+    @GetMapping("/internal/events/{event-id}")
+    EventFullDto getById(@PathVariable("event-id") long eventId);
 
 }

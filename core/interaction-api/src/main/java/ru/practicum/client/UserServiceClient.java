@@ -16,15 +16,15 @@ import java.util.Map;
 @FeignClient(name = "user-service")
 public interface UserServiceClient {
 
-    @GetMapping("/internal/users/{userId}")
-    UserDto getById(@PathVariable long userId);
+    @GetMapping("/internal/users/{user-id}")
+    UserDto getById(@PathVariable("user-id") long userId);
 
-    @GetMapping("/internal/users/{userId}/check")
-    void checkExistence(@PathVariable("userId") long userId);
+    @GetMapping("/internal/users/{user-id}/check")
+    void checkExistence(@PathVariable("user-id") long userId);
 
-    @DeleteMapping("/admin/users/{userId}")
+    @DeleteMapping("/admin/users/{user-id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    void delete(@PathVariable("userId") long userId);
+    void delete(@PathVariable("user-id") long userId);
 
     @PostMapping("/admin/users")
     @ResponseStatus(HttpStatus.CREATED)

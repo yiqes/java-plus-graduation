@@ -12,14 +12,14 @@ import java.util.Map;
 @FeignClient(name = "request-service")
 public interface RequestServiceClient {
     @GetMapping(path = "/internal/count")
-    long countAllByEventIdAndStatusIs(@RequestParam("eventId") long eventId,
+    long countAllByEventIdAndStatusIs(@RequestParam("event-id") long eventId,
                                       @RequestParam String status);
 
     @GetMapping("/internal/confirmed")
     Map<Long, Long> getConfirmedRequestMap(@RequestParam List<Long> eventIds);
 
-    @GetMapping("/internal/requests/count/{eventId}")
-    long countByStatusAndEventId(@RequestParam RequestStatus status, @PathVariable long eventId);
+    @GetMapping("/internal/requests/count/{event-id}")
+    long countByStatusAndEventId(@RequestParam RequestStatus status, @PathVariable("event-id") long eventId);
 
     @GetMapping("/internal/requests/count")
     Map<Long, Long> countByStatusAndEventsIds(

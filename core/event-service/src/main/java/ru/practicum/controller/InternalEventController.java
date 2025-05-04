@@ -17,8 +17,8 @@ public class InternalEventController {
 
     private final EventService eventService;
 
-    @GetMapping("/{eventId}")
-    public EventFullDto getById(@PathVariable long eventId) {
+    @GetMapping("/{event-id}")
+    public EventFullDto getById(@PathVariable("event-id") long eventId) {
         log.info("|| ==> GET /internal/events Getting event: {}", eventId);
         EventFullDto savedEvent = eventService.getByIdInternal(eventId);
         log.info("|| <== GET /internal/events Returning event: {}", eventId);

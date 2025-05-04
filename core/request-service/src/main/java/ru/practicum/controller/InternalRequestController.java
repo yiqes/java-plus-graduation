@@ -17,8 +17,8 @@ public class InternalRequestController {
 
     private final RequestService requestService;
 
-    @GetMapping("/count/{eventId}")
-    public long countByStatusAndEventId(@RequestParam RequestStatus status, @PathVariable long eventId) {
+    @GetMapping("/count/{event-id}")
+    public long countByStatusAndEventId(@RequestParam RequestStatus status, @PathVariable("event-id") long eventId) {
         log.info("|| ==> GET /internal/requests/count/{eventId} Counting by status {} of eventId {}", status, eventId);
         long count = requestService.countByStatusAndEventId(status, eventId);
         log.info("|| <== GET /internal/requests/count/{eventId} Returning count by status {} of eventId {}", status, eventId);

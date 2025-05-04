@@ -23,8 +23,8 @@ public class ErrorResponse {
     public static ErrorResponse getErrorResponse(Exception e, Logger log) {
         log.info("Error", e);
         ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
+        StringWriter stringWriter = new StringWriter();
+        PrintWriter pw = new PrintWriter(stringWriter);
         e.printStackTrace(pw);
         errorResponse.setStacktrace(pw.toString());
         return errorResponse;
