@@ -14,9 +14,16 @@ import java.util.List;
  */
 public interface EndpointHitRepository extends JpaRepository<EndpointHit, Integer> {
 
-    /**
-     * The constant SELECT_STAT_WITHOUT_UNIQUE_IP_SQL.
-     */
+//    List<EndpointHit> findAllByUriIn(List<String> uris);
+//
+//    @Query("select h from EndpointHit  h " +
+//            "where h.timestamp > :start and h.timestamp < :end")
+//    List<EndpointHit> getStat(LocalDateTime start, LocalDateTime end);
+//
+//    @Query("select h from EndpointHit  h " +
+//            "where h.timestamp > :start and h.timestamp < :end and h.uri in :uris ")
+//    List<EndpointHit> getStatByUris(LocalDateTime start, LocalDateTime end, List<String> uris);
+
     String SELECT_STAT_WITHOUT_UNIQUE_IP_SQL = "SELECT " +
             "new ru.practicum.dto.ViewStatsDto(e.app, e.uri, " +
             "(SELECT count(ep.ip) FROM EndpointHit AS ep WHERE ep.uri = e.uri) AS hits) " +

@@ -49,6 +49,7 @@ public class PublicEventController {
             @RequestParam(required = false) @DateTimeFormat(pattern = PATTERN_DATE) LocalDateTime rangeStart,
             @RequestParam(required = false) @DateTimeFormat(pattern = PATTERN_DATE) LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "false") Boolean onlyAvailable,
+            @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "0") Integer from,
             @RequestParam(defaultValue = "10") Integer size,
             HttpServletRequest httpRequest) {
@@ -73,9 +74,13 @@ public class PublicEventController {
         eventSearchParams.setFrom(from);
         eventSearchParams.setSize(size);
 
-        List<EventShortDto> eventShortDtoList = eventService.getAllByPublic(eventSearchParams);
+        String clientIp = httpRequest.getRemoteAddr();
+
+        List<EventShortDto> eventShortDtoList = eventService.getAllByPublic(eventSearchParams, onlyAvailable, sort, clientIp);
         log.info("<== GET /events Returning public searching events. List size: {}",
                 eventShortDtoList.size());
+        log.info("==> GET /events: text={}, categories={}, paid={}, rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={}",
+                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
         return eventShortDtoList;
     }
 

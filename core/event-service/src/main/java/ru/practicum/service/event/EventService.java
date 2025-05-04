@@ -102,7 +102,7 @@ public interface EventService {
     EventFullDto getByIdInternal(long eventId);
 
     @Transactional(readOnly = true)
-    List<EventShortDto> getAllByPublic(EventSearchParams searchParams);
+    List<EventShortDto> getAllByPublic(EventSearchParams searchParams, Boolean onlyAvailable, String sort, String clientIp);
 }
 
 

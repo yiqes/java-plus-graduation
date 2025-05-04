@@ -1,66 +1,46 @@
 package ru.practicum.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.dto.EndpointHitResponseDto;
-import ru.practicum.dto.EndpointHitSaveRequestDto;
+import ru.practicum.ErrorResponse;
+import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.service.StatService;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * The type Stat controller.
- */
 @RestController
 @Slf4j
 public class StatController {
 
-    private final StatService service;
+    private final StatService statsService;
 
-    /**
-     * Instantiates a new Stat controller.
-     *
-     * @param service the service
-     */
     @Autowired
     public StatController(StatService service) {
-        this.service = service;
+        this.statsService = service;
     }
 
-    /**
-     * Save info endpoint hit response dto.
-     *
-     * @param endpointHitDto the endpoint hit dto
-     * @return the endpoint hit response dto
-     */
+
     @PostMapping("/hit")
     @ResponseStatus(HttpStatus.CREATED)
-    public EndpointHitResponseDto saveInfo(@RequestBody EndpointHitSaveRequestDto endpointHitDto) {
-        log.info("/POST: Запрос на сохранение {}", endpointHitDto);
-        return service.saveInfo(endpointHitDto);
+    public EndpointHitDto saveHit(@RequestBody EndpointHitDto hitDto) {
+
+        return statsService.saveHit(hitDto);
     }
 
-    /**
-     * Gets stats.
-     *
-     * @param start  the start
-     * @param end    the end
-     * @param uris   the uris
-     * @param unique the unique
-     * @return the stats
-     */
     @GetMapping("/stats")
-    public List<ViewStatsDto> getStats(
-            @RequestParam(value = "start", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime start,
-            @RequestParam(value = "end", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
-            @RequestParam(value = "uris", required = false) List<String> uris,
-            @RequestParam(value = "unique", defaultValue = "false") boolean unique
+    public List<ViewStatsDto> getHits(@RequestParam(value = "start", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime start,
+                                      @RequestParam(value = "end", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
+                                      @RequestParam(value = "uris", required = false) List<String> uris,
+                                      @RequestParam(value = "unique", defaultValue = "false") boolean unique
     ) {
         if (start == null || end == null) {
             throw new IllegalArgumentException("Время не может быть Null");
@@ -72,6 +52,17 @@ public class StatController {
             uris = new ArrayList<>();
         }
         log.info("/GET запрос на получение статистики");
-        return service.getStats(start, end, uris, unique);
+        return statsService.getStats(start, end, uris, unique);
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleException(final IllegalArgumentException e) {
+        ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        errorResponse.setStacktrace(pw.toString());
+        return errorResponse;
     }
 }
