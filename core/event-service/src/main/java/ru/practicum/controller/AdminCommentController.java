@@ -23,6 +23,7 @@ import java.util.List;
 public class AdminCommentController {
     private final CommentService commentService;
     private static final String PATH = "comment-id";
+    private static final String PATH_WITH_ROOT = "/{comment-id}";
 
     /**
      * Gets comment for admin.
@@ -30,7 +31,7 @@ public class AdminCommentController {
      * @param commentId the comment id
      * @return the comment for admin
      */
-    @GetMapping("/{comment-id}")
+    @GetMapping(PATH_WITH_ROOT)
     public CommentFullDto getCommentForAdmin(@PathVariable(PATH) @NotNull Long commentId) {
         log.info("==> Comment with id={} for Admin was asked", commentId);
         return commentService.getCommentForAdmin(commentId);
@@ -73,7 +74,7 @@ public class AdminCommentController {
      *
      * @param commentId the comment id
      */
-    @DeleteMapping("/{comment-id}")
+    @DeleteMapping(PATH_WITH_ROOT)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCommentByAdmin(@PathVariable(PATH) @NotNull Long commentId) {
         log.info("==> Comments with id={} was deleted by Admin", commentId);

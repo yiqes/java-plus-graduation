@@ -16,6 +16,7 @@ import ru.practicum.service.category.CategoryService;
 public class AdminCategoryController {
     private final CategoryService categoryService;
     private static final String PATH = "cat-id";
+    private static final String PATH_WITH_ROOT = "/{cat-id}";
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -26,14 +27,14 @@ public class AdminCategoryController {
         return categoryDto;
     }
 
-    @DeleteMapping("/{cat-id}")
+    @DeleteMapping(PATH_WITH_ROOT)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     void delete(@PathVariable(PATH) Long catId) {
         log.info("==> delete for catId = {}", catId);
         categoryService.delete(catId);
     }
 
-    @PatchMapping("/{cat-id}")
+    @PatchMapping(PATH_WITH_ROOT)
     CategoryDto update(@PathVariable(PATH) Long catId, @Valid @RequestBody NewCategoryDto newCategoryDto) {
         log.info("==> Admin updating category: {}", newCategoryDto);
         CategoryDto categoryDto = categoryService.update(catId, newCategoryDto);

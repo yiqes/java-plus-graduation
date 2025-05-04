@@ -51,7 +51,7 @@ public class UtilCommentClass {
 
         if (newCommentDto.getParentComment() != null) {
             Comment parentComment = commentRepository.findById(newCommentDto.getParentComment())
-                    .orElseThrow(() -> new NotFoundException("Parent comment not found", ""));
+                    .orElseThrow(() -> new NotFoundException("Parent comment with id = ", comment.getId() + " not found"));
             comment.setParent(parentComment);
         }
 
@@ -104,7 +104,7 @@ public class UtilCommentClass {
 
         if (dto.getParentComment() != null) {
             Comment parentComment = commentRepository.findById(dto.getParentComment().getId())
-                    .orElseThrow(() -> new NotFoundException("Parent comment not found", ""));
+                    .orElseThrow(() -> new NotFoundException("Parent comment with id = ", comment.getId() + " not found"));
 
             comment.setParent(parentComment);
         }
