@@ -18,7 +18,6 @@ public class CommentDto {
     String text;
     String created;
     String updated;
-//    Long parentId;
     CommentDto replyComment;
 
 }

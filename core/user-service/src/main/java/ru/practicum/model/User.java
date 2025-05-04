@@ -2,6 +2,7 @@ package ru.practicum.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 /**
  * The type User.
@@ -14,15 +15,16 @@ import lombok.*;
 @EqualsAndHashCode(of = "email")
 @AllArgsConstructor
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
-    private Long id;
+    Long id;
 
     @Column(name = "name")
-    private String name;
+    String name;
 
     @Column(name = "email", unique = true)
-    private String email;
+    String email;
 }

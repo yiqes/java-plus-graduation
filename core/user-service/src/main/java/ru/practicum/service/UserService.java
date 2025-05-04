@@ -3,11 +3,9 @@ package ru.practicum.service;
 import ru.practicum.controller.AdminUsersGetAllParams;
 import ru.practicum.dto.user.NewUserRequest;
 import ru.practicum.dto.user.UserDto;
-import ru.practicum.model.User;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * The interface User service.

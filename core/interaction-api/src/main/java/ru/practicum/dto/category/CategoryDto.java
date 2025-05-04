@@ -22,5 +22,5 @@ public class CategoryDto {
     @NotBlank(message = "Название категории обязательно")
     @Size(max = 50)
     @Size(min = 1)
-    private String name;
+    String name;
 }

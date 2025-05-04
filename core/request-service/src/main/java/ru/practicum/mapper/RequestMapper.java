@@ -8,7 +8,6 @@ import ru.practicum.client.EventServiceClient;
 import ru.practicum.client.UserServiceClient;
 import ru.practicum.dto.request.ParticipationRequestDto;
 import ru.practicum.enums.RequestStatus;
-import ru.practicum.exception.NotFoundException;
 import ru.practicum.model.Request;
 
 import java.time.LocalDateTime;

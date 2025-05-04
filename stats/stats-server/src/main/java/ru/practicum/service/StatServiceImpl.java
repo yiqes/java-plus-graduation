@@ -10,8 +10,6 @@ import ru.practicum.repository.EndpointHitRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static ru.practicum.mapper.EndpointHitMapper.dtoToHit;
 import static ru.practicum.mapper.EndpointHitMapper.toHitDto;
@@ -49,32 +47,5 @@ public class StatServiceImpl implements StatService {
         }
         log.info("Полученные статистические данные: {}", stats);
         return new ArrayList<>(stats);
-
-//        List<EndpointHit> data;
-//        List<ViewStatsDto> result = new ArrayList<>();
-//        if ((start.isBlank() || end.isBlank())) {
-//            data = endpointHitRepository.findAllByUriIn(uris);
-//        } else {
-//            LocalDateTime localDateTimeStart = LocalDateTime.parse(start, FORMATTER);
-//            LocalDateTime localDateTimeEnd = LocalDateTime.parse(end, FORMATTER);
-//            if (!localDateTimeStart.isBefore(localDateTimeEnd)) {
-//                throw new IllegalArgumentException("start must be before end");
-//            }
-//            data = (uris == null || uris.isEmpty()) ? endpointHitRepository.getStat(localDateTimeStart, localDateTimeEnd) :
-//                    endpointHitRepository.getStatByUris(localDateTimeStart, localDateTimeEnd, uris);
-//        }
-//        Map<String, Map<String, List<EndpointHit>>> mapByAppAndUri = data.stream()
-//                .collect(Collectors.groupingBy(EndpointHit::getApp,
-//                        Collectors.groupingBy(EndpointHit::getUri)));
-//        mapByAppAndUri.forEach((appKey, mapUriValue) -> mapUriValue.forEach((uriKey, hitsValue) -> {
-//            ViewStatsDto hitStat = new ViewStatsDto();
-//            hitStat.setApp(appKey);
-//            hitStat.setUri(uriKey);
-//            List<String> ips = hitsValue.stream().map(EndpointHit::getIp).toList();
-//            Integer hits = unique ? ips.stream().distinct().toList().size() : ips.size();
-//            hitStat.setHits(hits);
-//            result.add(hitStat);
-//        }));
-//        return result.stream().sorted(Comparator.comparingInt(ViewStatsDto::getHits).reversed()).toList();
     }
 }

@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import ru.practicum.enums.RequestStatus;
 
-import java.util.List;
 import java.util.Set;
 
 /**

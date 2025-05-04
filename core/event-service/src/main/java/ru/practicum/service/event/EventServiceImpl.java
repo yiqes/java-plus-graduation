@@ -541,6 +541,4 @@ public class EventServiceImpl implements EventService {
                 .map(eventMapper::toEventShortDto)
                 .toList();
     }
-
-
 }

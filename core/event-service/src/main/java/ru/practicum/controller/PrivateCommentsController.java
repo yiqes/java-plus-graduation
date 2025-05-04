@@ -15,9 +15,6 @@ import ru.practicum.service.comment.CommentService;
 
 import java.util.List;
 
-/**
- * The type Private comments controller.
- */
 @RestController
 @RequestMapping("comment")
 @AllArgsConstructor

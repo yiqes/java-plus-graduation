@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventShortDto;
 import ru.practicum.exception.IncorrectValueException;
-import ru.practicum.exception.ValidationException;
 import ru.practicum.service.event.EventSearchParams;
 import ru.practicum.service.event.EventService;
 import ru.practicum.service.event.PublicSearchParams;

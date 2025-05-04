@@ -9,9 +9,6 @@ import ru.practicum.dto.category.CategoryDto;
 import ru.practicum.dto.category.NewCategoryDto;
 import ru.practicum.service.category.CategoryService;
 
-/**
- * The type Admin category controller.
- */
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -20,12 +17,6 @@ public class AdminCategoryController {
     private final CategoryService categoryService;
     private static final String PATH = "cat-id";
 
-    /**
-     * Create category dto.
-     *
-     * @param newCategoryDto the new category dto
-     * @return the category dto
-     */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     CategoryDto create(@Valid @RequestBody NewCategoryDto newCategoryDto) {
@@ -35,11 +26,6 @@ public class AdminCategoryController {
         return categoryDto;
     }
 
-    /**
-     * Delete category with provided id by admin.
-     *
-     * @param catId the cat id
-     */
     @DeleteMapping("/{cat-id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     void delete(@PathVariable(PATH) Long catId) {
@@ -47,13 +33,6 @@ public class AdminCategoryController {
         categoryService.delete(catId);
     }
 
-    /**
-     * Update category dto.
-     *
-     * @param catId          the cat id
-     * @param newCategoryDto the new category dto
-     * @return the category dto
-     */
     @PatchMapping("/{cat-id}")
     CategoryDto update(@PathVariable(PATH) Long catId, @Valid @RequestBody NewCategoryDto newCategoryDto) {
         log.info("==> Admin updating category: {}", newCategoryDto);
