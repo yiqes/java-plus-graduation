@@ -14,9 +14,6 @@ import java.util.List;
  */
 public interface EndpointHitRepository extends JpaRepository<EndpointHit, Integer> {
 
-    /**
-     * The constant SELECT_STAT_WITHOUT_UNIQUE_IP_SQL.
-     */
     String SELECT_STAT_WITHOUT_UNIQUE_IP_SQL = "SELECT " +
             "new ru.practicum.dto.ViewStatsDto(e.app, e.uri, " +
             "(SELECT count(ep.ip) FROM EndpointHit AS ep WHERE ep.uri = e.uri) AS hits) " +

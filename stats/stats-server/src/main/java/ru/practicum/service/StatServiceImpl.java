@@ -5,13 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dto.*;
-import ru.practicum.mapper.EndpointHitMapper;
-import ru.practicum.model.EndpointHit;
 import ru.practicum.repository.EndpointHitRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import static ru.practicum.mapper.EndpointHitMapper.dtoToHit;
+import static ru.practicum.mapper.EndpointHitMapper.toHitDto;
 
 /**
  * The type Stat service.
@@ -22,18 +23,15 @@ import java.util.List;
 public class StatServiceImpl implements StatService {
 
     private final EndpointHitRepository endpointHitRepository;
-    private final EndpointHitMapper mapper;
 
     @Override
     @Transactional
-    public EndpointHitResponseDto saveInfo(EndpointHitSaveRequestDto endpointHitSaveRequestDto) {
-        EndpointHit endpointHit = mapper.toEndpointHit(endpointHitSaveRequestDto);
-        endpointHit = endpointHitRepository.save(endpointHit);
-        return mapper.toResponseDto(endpointHit);
+    public EndpointHitDto saveHit(EndpointHitDto hitDto) {
+        return toHitDto(endpointHitRepository.save(dtoToHit(hitDto)));
     }
 
-    @Override
     @Transactional(readOnly = true)
+    @Override
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
         log.info("Получение статистики с параметрами: start={}, end={}, uris={}, unique={}", start, end, uris, unique);
         List<ViewStatsDto> stats;
