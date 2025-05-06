@@ -89,19 +89,16 @@ public interface EventService {
                                   LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                   Boolean onlyAvailable, String sort, int from, int size, String clientIp);
 
-    /**
-     * Gets event by id.
-     *
-     * @param id       the id
-     * @param clientIp the client ip
-     * @return the event by id
-     */
-    EventFullDto getEventById(Long id, String clientIp);
+    EventFullDto getEventById(Long id, long userId);
 
     EventFullDto getByIdInternal(long eventId);
 
     @Transactional(readOnly = true)
     List<EventShortDto> getAllByPublic(EventSearchParams searchParams, Boolean onlyAvailable, String sort, String clientIp);
+
+    EventShortDto addLike(long userId, long eventId);
+
+    void deleteLike(long userId, long eventId);
 }
 
 

@@ -5,14 +5,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.AnalyzerClient;
+import ru.practicum.CollectorClient;
 import ru.practicum.dto.event.EventFullDto;
+import ru.practicum.dto.event.EventRecommendationDto;
 import ru.practicum.dto.event.EventShortDto;
+import ru.practicum.ewm.stats.proto.ActionTypeProto;
+import ru.practicum.ewm.stats.proto.RecommendationsMessages;
 import ru.practicum.exception.IncorrectValueException;
 import ru.practicum.service.event.EventSearchParams;
 import ru.practicum.service.event.EventService;
 import ru.practicum.service.event.PublicSearchParams;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static ru.practicum.constant.Constant.PATTERN_DATE;
@@ -25,7 +31,13 @@ import static ru.practicum.constant.Constant.PATTERN_DATE;
 @RequiredArgsConstructor
 @Slf4j
 public class PublicEventController {
+
+    private final CollectorClient collectorClient;
+
+    private final AnalyzerClient analyzerClient;
+
     private final EventService eventService;
+    private static final String X_EWM_USER_ID_HEADER = "X-EWM-USER-ID";
 
     /**
      * Gets events.
@@ -83,21 +95,32 @@ public class PublicEventController {
         return eventShortDtoList;
     }
 
-    /**
-     * Gets event by id.
-     *
-     * @param eventId the event id
-     * @param request the request
-     * @return the event by id
-     */
     @GetMapping("/{event-id}")
-    public EventFullDto getEventById(@PathVariable("event-id") Long eventId, HttpServletRequest request) {
+    public EventFullDto getEventById(@PathVariable("event-id") Long eventId, @RequestHeader(X_EWM_USER_ID_HEADER) long userId) {
         log.info("Получение информации о событии с id={}", eventId);
 
-        // Получение IP клиента
-        String clientIp = request.getRemoteAddr();
-
         // Получение события через сервис
-        return eventService.getEventById(eventId, clientIp);
+        return eventService.getEventById(eventId, userId);
+    }
+
+    @GetMapping("/recommendations")
+    public List<EventRecommendationDto> getRecommendations(@RequestHeader(X_EWM_USER_ID_HEADER) long userId,
+                                                           @RequestParam(defaultValue = "10") int maxResults) {
+        var recommendationStream = analyzerClient.getRecommendationsForUser(userId, maxResults);
+        var recommendationList = recommendationStream.toList();
+
+        List<EventRecommendationDto> result = new ArrayList<>();
+        for (RecommendationsMessages.RecommendedEventProto requestProto : recommendationList) {
+            result.add(new EventRecommendationDto(requestProto.getEventId(), requestProto.getScore()));
+        }
+        return result;
+    }
+
+    @PutMapping("/{event-id}/like")
+    public void likeEvent(@PathVariable("event-id") Long eventId,
+                          @RequestHeader(X_EWM_USER_ID_HEADER) long userId) {
+        eventService.addLike(userId, eventId);
+
+        collectorClient.sendUserAction(userId, eventId, ActionTypeProto.ACTION_LIKE);
     }
 }
