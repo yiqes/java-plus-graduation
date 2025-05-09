@@ -8,6 +8,7 @@ spring:
       discovery:
         enabled: true
         serviceId: config-server
+      enabled: true
       fail-fast: true
       retry:
         useRandomPolicy: true
