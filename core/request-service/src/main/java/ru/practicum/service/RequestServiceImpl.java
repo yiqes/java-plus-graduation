@@ -11,9 +11,9 @@ import ru.practicum.dto.request.EventRequestStatusUpdateRequest;
 import ru.practicum.dto.request.EventRequestStatusUpdateResult;
 import ru.practicum.dto.request.ParticipationRequestDto;
 import ru.practicum.enums.RequestStatus;
-import ru.practicum.ewm.stats.proto.ActionTypeProto;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
+import ru.practicum.grpc.stats.action.UserActionMessage;
 import ru.practicum.mapper.RequestMapper;
 import ru.practicum.model.Request;
 import ru.practicum.repository.RequestRepository;
@@ -49,7 +49,7 @@ public class RequestServiceImpl implements RequestService {
         requestToEventVerification(userId, eventId);
         Request request = requestMapper.formUserAndEventToRequest(userId, eventId);
         requestRepository.save(request);
-        collectorClient.sendUserAction(userId, eventId, ActionTypeProto.ACTION_REGISTER);
+        collectorClient.sendUserAction(userId, eventId, UserActionMessage.ActionTypeProto.ACTION_REGISTER);
         return requestMapper.toParticipationRequestDto(request);
     }
 

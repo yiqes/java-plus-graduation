@@ -10,9 +10,9 @@ import ru.practicum.CollectorClient;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventRecommendationDto;
 import ru.practicum.dto.event.EventShortDto;
-import ru.practicum.ewm.stats.proto.ActionTypeProto;
-import ru.practicum.ewm.stats.proto.RecommendationsMessages;
 import ru.practicum.exception.IncorrectValueException;
+import ru.practicum.grpc.stats.action.UserActionMessage;
+import ru.practicum.grpc.stats.recommendation.RecommendationMessage;
 import ru.practicum.service.event.EventSearchParams;
 import ru.practicum.service.event.EventService;
 import ru.practicum.service.event.PublicSearchParams;
@@ -110,7 +110,7 @@ public class PublicEventController {
         var recommendationList = recommendationStream.toList();
 
         List<EventRecommendationDto> result = new ArrayList<>();
-        for (RecommendationsMessages.RecommendedEventProto requestProto : recommendationList) {
+        for (RecommendationMessage.RecommendedEventProto requestProto : recommendationList) {
             result.add(new EventRecommendationDto(requestProto.getEventId(), requestProto.getScore()));
         }
         return result;
@@ -121,6 +121,6 @@ public class PublicEventController {
                           @RequestHeader(X_EWM_USER_ID_HEADER) long userId) {
         eventService.addLike(userId, eventId);
 
-        collectorClient.sendUserAction(userId, eventId, ActionTypeProto.ACTION_LIKE);
+        collectorClient.sendUserAction(userId, eventId, UserActionMessage.ActionTypeProto.ACTION_LIKE);
     }
 }

@@ -7,23 +7,21 @@ import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
-import ru.practicum.ewm.stats.proto.UserActionControllerGrpc;
-import ru.practicum.ewm.stats.proto.UserActionProto;
+import ru.practicum.grpc.stats.action.UserActionControllerGrpc;
+import ru.practicum.grpc.stats.action.UserActionMessage;
 import ru.practicum.handler.ActionsHandlers;
-import ru.practicum.mapper.UserActionMapper;
-import ru.practicum.ewm.stats.avro.UserActionAvro;
 
 @Slf4j
 @GrpcService
 @RequiredArgsConstructor
-public class UserActionController extends UserActionControllerGrpc.UserActionControllerImplBase {
+public class CollectorController extends UserActionControllerGrpc.UserActionControllerImplBase {
     private final ActionsHandlers actionHandler;
 
     @Override
-    public void collectUserAction(UserActionProto request, StreamObserver<Empty> responseObserver) {
+    public void collectUserAction(UserActionMessage.UserActionRequest request, StreamObserver<UserActionMessage.UserActionResponse> responseObserver) {
         try {
             actionHandler.handle(request);
-            responseObserver.onNext(Empty.newBuilder().build());
+            responseObserver.onNext(UserActionMessage.UserActionResponse.newBuilder().getDefaultInstanceForType());
             responseObserver.onCompleted();
         } catch (IllegalArgumentException e) {
             log.error("IllegalArgumentException collectUserAction: {}", e.getMessage(), e);
@@ -37,4 +35,6 @@ public class UserActionController extends UserActionControllerGrpc.UserActionCon
             );
         }
     }
+
+
 }

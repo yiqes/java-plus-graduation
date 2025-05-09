@@ -5,9 +5,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.ewm.stats.proto.RecommendationsMessages;
+import ru.practicum.grpc.stats.recommendation.RecommendationMessage;
 import ru.practicum.model.EventSimilarity;
-import ru.practicum.model.RecommendedEvent;
 import ru.practicum.model.UserAction;
 import ru.practicum.repository.EventSimilarityRepository;
 import ru.practicum.repository.UserActionRepository;
@@ -25,7 +24,7 @@ public class RecommendationService {
     private final UserActionRepository userActionRepository;
     private final EventSimilarityRepository eventSimilarityRepository;
 
-    public List<RecommendationsMessages.RecommendedEventProto> getRecommendationsForUser(RecommendationsMessages.UserPredictionsRequestProto requestProto) {
+    public List<RecommendationMessage.RecommendedEventProto> getRecommendationsForUser(RecommendationMessage.UserPredictionsRequestProto requestProto) {
         log.info("Recommendations for user: {}", requestProto.getUserId());
         long userId = requestProto.getUserId();
         int maxResult = requestProto.getMaxResults();
@@ -92,10 +91,10 @@ public class RecommendationService {
             }
         }
 
-        List<RecommendationsMessages.RecommendedEventProto> eventProtoList = new ArrayList<>();
+        List<RecommendationMessage.RecommendedEventProto> eventProtoList = new ArrayList<>();
         for (Long eventId : weightedScoreForUnwatchedEvent.keySet()) {
 
-            RecommendationsMessages.RecommendedEventProto.newBuilder()
+            RecommendationMessage.RecommendedEventProto.newBuilder()
                     .setEventId(eventId)
                     .setScore(weightedScoreForUnwatchedEvent.get(eventId) / weightedScoreForUnwatchedEvent.size());
         }
@@ -103,7 +102,7 @@ public class RecommendationService {
         return eventProtoList;
     }
 
-    public List<RecommendationsMessages.RecommendedEventProto> getSimilarEvents(RecommendationsMessages.SimilarEventsRequestProto eventsRequestProto) {
+    public List<RecommendationMessage.RecommendedEventProto> getSimilarEvents(RecommendationMessage.SimilarEventsRequestProto eventsRequestProto) {
         long eventId = eventsRequestProto.getEventId();
         List<EventSimilarity> similarEventitsList = eventSimilarityRepository.findAllByEventAOrEventB(eventId, eventId);
         Set<Long> watchedByUserEvents = userActionRepository.findByUserId(eventsRequestProto.getUserId())
@@ -116,16 +115,16 @@ public class RecommendationService {
                 finalEventList.remove(eventSimilarity);
             }
         }
-        List<RecommendationsMessages.RecommendedEventProto> recommendedEventList = new ArrayList<>();
+        List<RecommendationMessage.RecommendedEventProto> recommendedEventList = new ArrayList<>();
         for (EventSimilarity eventSimilarity : finalEventList) {
-            RecommendationsMessages.RecommendedEventProto eventProto;
+            RecommendationMessage.RecommendedEventProto eventProto;
             if (eventsRequestProto.getEventId() != eventSimilarity.getEventA()) {
-                eventProto = RecommendationsMessages.RecommendedEventProto.newBuilder()
+                eventProto = RecommendationMessage.RecommendedEventProto.newBuilder()
                         .setEventId(eventSimilarity.getEventA())
                         .setScore(eventSimilarity.getScore())
                         .build();
             } else {
-                eventProto = RecommendationsMessages.RecommendedEventProto.newBuilder()
+                eventProto = RecommendationMessage.RecommendedEventProto.newBuilder()
                         .setEventId(eventSimilarity.getEventB())
                         .setScore(eventSimilarity.getScore())
                         .build();
@@ -133,15 +132,15 @@ public class RecommendationService {
             recommendedEventList.add(eventProto);
         }
 
-        return recommendedEventList.stream().sorted(Comparator.comparingDouble(RecommendationsMessages.RecommendedEventProto::getScore)
+        return recommendedEventList.stream().sorted(Comparator.comparingDouble(RecommendationMessage.RecommendedEventProto::getScore)
                 .reversed()).limit(eventsRequestProto.getMaxResults()).toList();
     }
 
-    public List<RecommendationsMessages.RecommendedEventProto> getInteractionsCount(RecommendationsMessages.InteractionsCountRequestProto request) {
+    public List<RecommendationMessage.RecommendedEventProto> getInteractionsCount(RecommendationMessage.InteractionsCountRequestProto request) {
         log.info("Method getInteractionsCount began its work");
         List<UserAction> userActionList = userActionRepository.findByEventIdIsIn(request.getEventIdList());
         Map<Long, Double> recommendedEventMap = new HashMap<>();
-        List<RecommendationsMessages.RecommendedEventProto> recommendedEventList = new ArrayList<>();
+        List<RecommendationMessage.RecommendedEventProto> recommendedEventList = new ArrayList<>();
 
         for (UserAction userAction : userActionList) {
             if (!recommendedEventMap.containsKey(userAction.getEventId())) {
@@ -154,7 +153,7 @@ public class RecommendationService {
             }
         }
         for (long eventId : recommendedEventMap.keySet()) {
-            RecommendationsMessages.RecommendedEventProto eventProto = RecommendationsMessages.RecommendedEventProto.newBuilder()
+            RecommendationMessage.RecommendedEventProto eventProto = RecommendationMessage.RecommendedEventProto.newBuilder()
                     .setEventId(eventId)
                     .setScore(recommendedEventMap.get(eventId))
                     .build();

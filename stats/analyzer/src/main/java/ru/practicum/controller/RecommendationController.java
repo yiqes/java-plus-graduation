@@ -5,8 +5,8 @@ import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
-import ru.practicum.ewm.stats.proto.RecommendationsControllerGrpc;
-import ru.practicum.ewm.stats.proto.RecommendationsMessages;
+import ru.practicum.grpc.stats.recommendation.RecommendationMessage;
+import ru.practicum.grpc.stats.recommendation.RecommendationsControllerGrpc;
 import ru.practicum.service.RecommendationService;
 
 @GrpcService
@@ -16,8 +16,8 @@ public class RecommendationController extends RecommendationsControllerGrpc.Reco
     private final RecommendationService recommendationService;
 
     @Override
-    public void getSimilarEvents(RecommendationsMessages.SimilarEventsRequestProto eventsRequestProto,
-                                 StreamObserver<RecommendationsMessages.RecommendedEventProto> responseObserver) {
+    public void getSimilarEvents(RecommendationMessage.SimilarEventsRequestProto eventsRequestProto,
+                                 StreamObserver<RecommendationMessage.RecommendedEventProto> responseObserver) {
         try {
             recommendationService.getSimilarEvents(eventsRequestProto)
                     .forEach(responseObserver::onNext);
@@ -31,8 +31,8 @@ public class RecommendationController extends RecommendationsControllerGrpc.Reco
     }
 
     @Override
-    public void getRecommendationsForUser(RecommendationsMessages.UserPredictionsRequestProto request,
-                                          StreamObserver<RecommendationsMessages.RecommendedEventProto> responseObserver) {
+    public void getRecommendationsForUser(RecommendationMessage.UserPredictionsRequestProto request,
+                                          StreamObserver<RecommendationMessage.RecommendedEventProto> responseObserver) {
         try {
             recommendationService.getRecommendationsForUser(request)
                     .forEach(responseObserver::onNext);
@@ -46,8 +46,8 @@ public class RecommendationController extends RecommendationsControllerGrpc.Reco
     }
 
     @Override
-    public void getInteractionsCount(RecommendationsMessages.InteractionsCountRequestProto request,
-                                     StreamObserver<RecommendationsMessages.RecommendedEventProto> responseObserver) {
+    public void getInteractionsCount(RecommendationMessage.InteractionsCountRequestProto request,
+                                     StreamObserver<RecommendationMessage.RecommendedEventProto> responseObserver) {
         try {
             log.info("Received request for getting number of activities about event. Stage 1");
             recommendationService.getInteractionsCount(request)

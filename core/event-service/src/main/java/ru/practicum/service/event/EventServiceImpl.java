@@ -18,10 +18,10 @@ import ru.practicum.dto.event.*;
 import ru.practicum.enums.AdminStateAction;
 import ru.practicum.enums.EventState;
 import ru.practicum.enums.RequestStatus;
-import ru.practicum.ewm.stats.proto.ActionTypeProto;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.exception.ValidationException;
+import ru.practicum.grpc.stats.action.UserActionMessage;
 import ru.practicum.mapper.event.EventMapper;
 import ru.practicum.mapper.event.UtilEventClass;
 import ru.practicum.mapper.location.LocationMapper;
@@ -292,7 +292,7 @@ public class EventServiceImpl implements EventService {
 
         eventRepository.save(event);
 
-        collectorClient.sendUserAction(userId, eventId, ActionTypeProto.ACTION_VIEW);
+        collectorClient.sendUserAction(userId, eventId, UserActionMessage.ActionTypeProto.ACTION_VIEW);
 
         // Подсчет подтвержденных запросов
         long confirmedRequests = requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, eventId);

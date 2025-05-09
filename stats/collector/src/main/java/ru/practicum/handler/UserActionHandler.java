@@ -4,8 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.practicum.ewm.stats.avro.ActionTypeAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
-import ru.practicum.ewm.stats.proto.ActionTypeProto;
-import ru.practicum.ewm.stats.proto.UserActionProto;
+import ru.practicum.grpc.stats.action.UserActionMessage;
 import ru.practicum.service.KafkaMessageProducer;
 
 import java.time.Instant;
@@ -20,7 +19,7 @@ public class UserActionHandler implements ActionsHandlers {
     }
 
     @Override
-    public void handle(UserActionProto userActionProto) {
+    public void handle(UserActionMessage.UserActionRequest userActionProto) {
         log.info("Обработчик UserActionHandler начал работать");
 
         log.info("На вход:{}", userActionProto.toString());
@@ -46,14 +45,14 @@ public class UserActionHandler implements ActionsHandlers {
 
     }
 
-    private ActionTypeAvro getActionType(ActionTypeProto actionTypeProto) {
-        if (actionTypeProto.equals(ActionTypeProto.ACTION_LIKE)) {
+    private ActionTypeAvro getActionType(UserActionMessage.ActionTypeProto actionTypeProto) {
+        if (actionTypeProto.equals(UserActionMessage.ActionTypeProto.ACTION_LIKE)) {
             return ActionTypeAvro.LIKE;
         }
-        if (actionTypeProto.equals(ActionTypeProto.ACTION_REGISTER)) {
+        if (actionTypeProto.equals(UserActionMessage.ActionTypeProto.ACTION_REGISTER)) {
             return ActionTypeAvro.REGISTER;
         }
-        if (actionTypeProto.equals(ActionTypeProto.ACTION_VIEW)) {
+        if (actionTypeProto.equals(UserActionMessage.ActionTypeProto.ACTION_VIEW)) {
             return ActionTypeAvro.VIEW;
         }
         return null;

@@ -1,7 +1,8 @@
 package ru.practicum.handler;
 
-import ru.practicum.ewm.stats.proto.UserActionProto;
+
+import ru.practicum.grpc.stats.action.UserActionMessage;
 
 public interface ActionsHandlers {
-    void handle(UserActionProto userActionProto);
+    void handle(UserActionMessage.UserActionRequest userActionProto);
 }
