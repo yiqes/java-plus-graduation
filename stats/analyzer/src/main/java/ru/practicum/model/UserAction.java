@@ -1,11 +1,7 @@
 package ru.practicum.model;
 
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,16 +16,17 @@ import java.time.Instant;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "user_actions")
+@Table(name = "actions")
 public class UserAction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @Column(name = "user_id")
     private Long userId;
+    @Column(name = "event_id")
     private Long eventId;
-
+    @Column(name = "score")
     private Double score;
-
+    @Column(name = "lastInteraction")
     private Instant lastInteraction;
 }

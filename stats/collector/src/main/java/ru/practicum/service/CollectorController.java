@@ -1,6 +1,5 @@
 package ru.practicum.service;
 
-import com.google.protobuf.Empty;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;

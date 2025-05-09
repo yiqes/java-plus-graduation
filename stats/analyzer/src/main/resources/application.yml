@@ -13,6 +13,12 @@ spring:
       retry:
         useRandomPolicy: true
         max-interval: 6000
+  flyway:
+    flyway:
+      database: postgresql
+      ignore-future-migrations: true
+      postgresql:
+        transactional-lock: false
 eureka:
   client:
     serviceUrl:
