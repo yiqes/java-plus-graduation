@@ -29,7 +29,7 @@ public class UserAction {
     private Long userId;
     private Long eventId;
 
-    private Double maxWeight;
+    private Double score;
 
     private Instant lastInteraction;
 }

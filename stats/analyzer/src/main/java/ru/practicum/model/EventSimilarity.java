@@ -1,11 +1,8 @@
 package ru.practicum.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
 
@@ -16,13 +13,14 @@ import java.time.Instant;
 @Builder
 @Entity
 @Table(name = "events_similarity")
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class EventSimilarity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    Long id;
 
-    private Long eventA;
-    private Long eventB;
-    private Float score;
-    private Instant timestamp;
+    Long eventA;
+    Long eventB;
+    Double score;
+    Instant timestamp;
 }

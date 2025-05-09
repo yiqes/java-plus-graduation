@@ -1,6 +1,6 @@
 package ru.practicum.service.user;
 
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.stats.avro.ActionTypeAvro;
@@ -8,51 +8,49 @@ import ru.practicum.ewm.stats.avro.UserActionAvro;
 import ru.practicum.model.UserAction;
 import ru.practicum.repository.UserActionRepository;
 
-import java.time.Instant;
+import java.util.Optional;
+
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
-public class UserActionServiceImpl implements UserActionService {
+@AllArgsConstructor
+public class
 
+UserActionServiceImpl implements UserActionService {
     private final UserActionRepository userActionRepository;
 
     @Override
-    public void updateUserAction(UserActionAvro userActionAvro) {
-        long userId = userActionAvro.getUserId();
-        long eventId = userActionAvro.getEventId();
-        double newWeight = convertWeight(userActionAvro.getActionType());
-        long timestamp = userActionAvro.getTimestamp();
+    public void handleUserAction(UserActionAvro userActionAvro) {
 
-        Instant interactionTime = Instant.ofEpochMilli(timestamp);
-
-        UserAction userAction = userActionRepository.findByUserIdAndEventId(userId, eventId);
-
-        if (userAction == null) {
-            userAction = new UserAction();
-            userAction.setUserId(userId);
-            userAction.setEventId(eventId);
-            userAction.setMaxWeight(newWeight);
-            userAction.setLastInteraction(interactionTime);
+        Optional<UserAction> userActionOptional = userActionRepository.findByUserIdAndEventId(userActionAvro.getUserId(),
+                userActionAvro.getEventId());
+        if (userActionOptional.isPresent()) {
+            if (userActionOptional.get().getScore() <= calcInteractionScore(userActionAvro.getActionType())) {
+                UserAction userAction = UserAction.builder()
+                        .id(userActionOptional.get().getId())
+                        .userId(userActionAvro.getUserId())
+                        .lastInteraction(userActionAvro.getTimestamp())
+                        .eventId(userActionAvro.getEventId())
+                        .score(calcInteractionScore(userActionAvro.getActionType()))
+                        .build();
+                userActionRepository.save(userAction);
+            }
+        } else {
+            UserAction userAction = UserAction.builder()
+                    .userId(userActionAvro.getUserId())
+                    .lastInteraction(userActionAvro.getTimestamp())
+                    .eventId(userActionAvro.getEventId())
+                    .score(calcInteractionScore(userActionAvro.getActionType()))
+                    .build();
             userActionRepository.save(userAction);
-            return;
         }
-        if (newWeight > userAction.getMaxWeight()) {
-            userAction.setMaxWeight(newWeight);
-        }
-        if (interactionTime.isAfter(userAction.getLastInteraction())) {
-            userAction.setLastInteraction(interactionTime);
-        }
-        userActionRepository.save(userAction);
-
-
     }
 
-    private double convertWeight(ActionTypeAvro actionType) {
-        return switch (actionType) {
+    private double calcInteractionScore(ActionTypeAvro type) {
+        return switch (type) {
+            case VIEW -> 0.4;
             case REGISTER -> 0.8;
-            case LIKE -> 1;
-            default -> 0.4;
+            case LIKE -> 1.0;
         };
     }
 }

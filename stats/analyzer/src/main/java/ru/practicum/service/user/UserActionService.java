@@ -3,5 +3,5 @@ package ru.practicum.service.user;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 
 public interface UserActionService {
-    void updateUserAction(UserActionAvro userActionAvro);
+    void handleUserAction(UserActionAvro userActionAvro);
 }

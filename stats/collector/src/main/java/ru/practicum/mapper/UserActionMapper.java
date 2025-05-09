@@ -5,6 +5,8 @@ import ru.practicum.ewm.stats.proto.ActionTypeProto;
 import ru.practicum.ewm.stats.proto.UserActionProto;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 
+import java.time.Instant;
+
 public class UserActionMapper {
 
     public static UserActionAvro toAvro(UserActionProto userActionProto) {
@@ -15,7 +17,7 @@ public class UserActionMapper {
                 .setUserId(userActionProto.getUserId())
                 .setEventId(userActionProto.getEventId())
                 .setActionType(toAvroActionType(userActionProto.getActionType()))
-                .setTimestamp(timestampMillis)
+                .setTimestamp(Instant.ofEpochSecond(timestampMillis))
                 .build();
     }
 

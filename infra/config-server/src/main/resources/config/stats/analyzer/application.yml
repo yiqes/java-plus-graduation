@@ -1,39 +1,56 @@
 spring:
   datasource:
-    driverClassName: org.postgresql.Driver
-    url: jdbc:postgresql://analyzer-db:5432/ewm-analyzer
+    url: jdbc:postgresql://localhost:5432/ewm-stats-analyzer-db
     username: root
     password: root
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        format_sql: true
-    generate-ddl: false
-
   sql:
     init:
       mode: always
-
-kafka:
-  bootstrap-servers: kafka:29092
-  user-actions-consumer:
-    group-id: analyzer-user-actions
-    topic: stats.user-actions.v1
-    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    value-deserializer: ru.practicum.AvroDeserializer
-  events-similarity-consumer:
-    group-id: analyzer-events-sim
-    topic: stats.events-similarity.v1
-    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    value-deserializer: ru.practicum.AvroDeserializer
+  output:
+    ansi:
+      enabled: ALWAYS
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  kafka:
+    consumer-user-actions:
+      bootstrap-servers: localhost:9092
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: ru.yandex.practicum.deserializer.UserActionDeserializer
+      client-id: user-consumer
+      group-id: group-user
+      max-poll-records: 100
+      fetch-max-bytes: 3072000
+      max-partition-fetch-bytes: 307200
+      consume-attempts-timeout-ms: 1000
+    consumer-events-similarity:
+      bootstrap-servers: localhost:9092
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: ru.practicum.deserializer.EventSimilarityDeserializer
+      client-id: similarity-consumer
+      group-id: group-similarity
+      max-poll-records: 100
+      fetch-max-bytes: 3072000
+      max-partition-fetch-bytes: 307200
+      consume-attempts-timeout-ms: 1000
+    producer:
+      bootstrap-servers: localhost:9092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: ru.practicum.serializer.AvroSerializer
+    topics:
+      user-action-topic: stats.user-actions.v1
+      events-similarity-topic: stats.events-similarity.v1
 
 grpc:
-  client:
-    analyzer:
-      address: 'discovery:///analyzer'
-      enableKeepAlive: true
-      keepAliveWithoutCalls: true
-      negotiationType: plaintext
+  analyzer:
+    address: 'discovery:///analyzer'
+    enableKeepAlive: true
+    keepAliveWithoutCalls: true
+    negotiationType: plaintext
+logging:
+  level:
+    io.grpc: DEBUG

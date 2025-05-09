@@ -1,19 +1,16 @@
 spring:
   kafka:
-    bootstrap-servers: kafka:29092
     producer:
+      bootstrap-servers: localhost:9092
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: ru.practicum.AvroSerializer
-
-collector:
-  kafka:
-    topic: stats.user-actions.v1
-
+      value-serializer: ru.practicum.serializer.UserActionsAvroSerializer
+    topics:
+      actions-topic: stats.user-actions.v1
 grpc:
   server:
     port: 0
   client:
-    analyzer:
+    collector:
       address: 'discovery:///collector'
       enableKeepAlive: true
       keepAliveWithoutCalls: true

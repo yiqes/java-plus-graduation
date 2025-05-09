@@ -33,7 +33,7 @@ public class CollectorClient {
                                     .setNanos(nanos)
                     )
                     .build();
-            collectorStub.collectUserAction(userActionProto);
+            Empty response = collectorStub.collectUserAction(userActionProto);
             log.info("sendUserAction -> Collector answered");
         } catch (Exception e) {
             log.error("Ошибка при отправке действия пользователя: userId={}, eventId={}, actionType={}",
