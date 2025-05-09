@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.practicum.CollectorClient;
 import ru.practicum.client.EventServiceClient;
 import ru.practicum.client.UserServiceClient;
 import ru.practicum.dto.request.EventRequestStatusUpdateRequest;
@@ -12,6 +13,7 @@ import ru.practicum.dto.request.ParticipationRequestDto;
 import ru.practicum.enums.RequestStatus;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
+import ru.practicum.grpc.stats.action.UserActionMessage;
 import ru.practicum.mapper.RequestMapper;
 import ru.practicum.model.Request;
 import ru.practicum.repository.RequestRepository;
@@ -30,6 +32,7 @@ public class RequestServiceImpl implements RequestService {
     private final RequestMapper requestMapper;
     private final UserServiceClient userServiceClient;
     private final RequestRepository requestRepository;
+    private final CollectorClient collectorClient;
 
     @Override
     public List<ParticipationRequestDto> getRequestByUserId(Long userId) {
@@ -46,6 +49,7 @@ public class RequestServiceImpl implements RequestService {
         requestToEventVerification(userId, eventId);
         Request request = requestMapper.formUserAndEventToRequest(userId, eventId);
         requestRepository.save(request);
+        collectorClient.sendUserAction(userId, eventId, UserActionMessage.ActionTypeProto.ACTION_REGISTER);
         return requestMapper.toParticipationRequestDto(request);
     }
 
