@@ -12,11 +12,13 @@ import ru.practicum.dto.request.ParticipationRequestDto;
 import ru.practicum.enums.RequestStatus;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
-import ru.practicum.grpc.stats.action.UserActionMessage;
+import ru.practicum.grpc.stat.action.ActionTypeProto;
 import ru.practicum.mapper.RequestMapper;
 import ru.practicum.model.Request;
 import ru.practicum.repository.RequestRepository;
+import ru.practicum.stats.client.StatClient;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +33,7 @@ public class RequestServiceImpl implements RequestService {
     private final RequestMapper requestMapper;
     private final UserServiceClient userServiceClient;
     private final RequestRepository requestRepository;
-    private final CollectorClient collectorClient;
+    private final StatClient statClient;
 
     @Override
     public List<ParticipationRequestDto> getRequestByUserId(Long userId) {
@@ -48,7 +50,7 @@ public class RequestServiceImpl implements RequestService {
         requestToEventVerification(userId, eventId);
         Request request = requestMapper.formUserAndEventToRequest(userId, eventId);
         requestRepository.save(request);
-        collectorClient.sendUserAction(userId, eventId, UserActionMessage.ActionTypeProto.ACTION_REGISTER);
+        statClient.registerUserAction(userId, eventId, ActionTypeProto.ACTION_REGISTER, Instant.now());
         return requestMapper.toParticipationRequestDto(request);
     }
 
