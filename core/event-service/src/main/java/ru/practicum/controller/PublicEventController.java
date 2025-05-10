@@ -5,21 +5,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.AnalyzerClient;
-import ru.practicum.CollectorClient;
 import ru.practicum.dto.event.EventFullDto;
-import ru.practicum.dto.event.EventRecommendationDto;
 import ru.practicum.dto.event.EventShortDto;
+import ru.practicum.dto.event.RecommendedEventDto;
 import ru.practicum.exception.IncorrectValueException;
-import ru.practicum.grpc.stats.action.UserActionMessage;
-import ru.practicum.grpc.stats.recommendation.RecommendationMessage;
 import ru.practicum.service.event.EventSearchParams;
 import ru.practicum.service.event.EventService;
 import ru.practicum.service.event.PublicSearchParams;
+import ru.practicum.stats.client.StatClient;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static ru.practicum.constant.Constant.PATTERN_DATE;
 
@@ -32,10 +29,7 @@ import static ru.practicum.constant.Constant.PATTERN_DATE;
 @Slf4j
 public class PublicEventController {
 
-    private final CollectorClient collectorClient;
-
-    private final AnalyzerClient analyzerClient;
-
+    private final StatClient statClient;
     private final EventService eventService;
     private static final String X_EWM_USER_ID_HEADER = "X-EWM-USER-ID";
 
@@ -104,23 +98,14 @@ public class PublicEventController {
     }
 
     @GetMapping("/recommendations")
-    public List<EventRecommendationDto> getRecommendations(@RequestHeader(X_EWM_USER_ID_HEADER) long userId,
-                                                           @RequestParam(defaultValue = "10") int maxResults) {
-        var recommendationStream = analyzerClient.getRecommendationsForUser(userId, maxResults);
-        var recommendationList = recommendationStream.toList();
-
-        List<EventRecommendationDto> result = new ArrayList<>();
-        for (RecommendationMessage.RecommendedEventProto requestProto : recommendationList) {
-            result.add(new EventRecommendationDto(requestProto.getEventId(), requestProto.getScore()));
-        }
-        return result;
+    public Stream<RecommendedEventDto> getRecommendations(@RequestHeader(X_EWM_USER_ID_HEADER) long userId,
+                                                          @RequestParam(defaultValue = "10") int maxResults) {
+        return eventService.getRecommendations(userId, maxResults);
     }
 
     @PutMapping("/{event-id}/like")
     public void likeEvent(@PathVariable("event-id") Long eventId,
                           @RequestHeader(X_EWM_USER_ID_HEADER) long userId) {
         eventService.addLike(userId, eventId);
-
-        collectorClient.sendUserAction(userId, eventId, UserActionMessage.ActionTypeProto.ACTION_LIKE);
     }
 }

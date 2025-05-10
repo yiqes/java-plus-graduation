@@ -1,13 +1,17 @@
 package ru.practicum.controller;
 
-import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
-import ru.practicum.grpc.stats.recommendation.RecommendationMessage;
-import ru.practicum.grpc.stats.recommendation.RecommendationsControllerGrpc;
+import ru.practicum.grpc.stat.dashboard.RecommendationsControllerGrpc;
+import ru.practicum.grpc.stat.request.InteractionsCountRequestProto;
+import ru.practicum.grpc.stat.request.RecommendedEventProto;
+import ru.practicum.grpc.stat.request.SimilarEventsRequestProto;
+import ru.practicum.grpc.stat.request.UserPredictionsRequestProto;
 import ru.practicum.service.RecommendationService;
+
+import java.util.List;
 
 @GrpcService
 @Slf4j
@@ -16,52 +20,56 @@ public class RecommendationController extends RecommendationsControllerGrpc.Reco
     private final RecommendationService recommendationService;
 
     @Override
-    public void getSimilarEvents(RecommendationMessage.SimilarEventsRequestProto eventsRequestProto,
-                                 StreamObserver<RecommendationMessage.RecommendedEventProto> responseObserver) {
+    public void getRecommendationsForUser(UserPredictionsRequestProto request,
+                                          StreamObserver<RecommendedEventProto> responseObserver) {
+        log.info("Получен запрос на рекомендации для пользователя: {}", request);
         try {
-            recommendationService.getSimilarEvents(eventsRequestProto)
-                    .forEach(responseObserver::onNext);
+            List<RecommendedEventProto> recommendedEvents = recommendationService.generateRecommendationsForUser(request);
+            recommendedEvents.forEach(responseObserver::onNext);
             responseObserver.onCompleted();
+            log.info("Успешно сформированы рекомендации для пользователя");
         } catch (Exception e) {
-            log.error("Unexpected error occurred in getSimilarEvents: {}", e.getMessage(), e);
-            responseObserver.onError(
-                    new RuntimeException("Error while trying to complete getSimilarEvents")
-            );
+            log.error("Ошибка при формировании рекомендаций для пользователя: {}", request, e);
+            responseObserver.onError(io.grpc.Status.INTERNAL
+                    .withDescription("Ошибка сервера при получении рекомендаций: " + e.getMessage())
+                    .withCause(e)
+                    .asRuntimeException());
         }
     }
 
     @Override
-    public void getRecommendationsForUser(RecommendationMessage.UserPredictionsRequestProto request,
-                                          StreamObserver<RecommendationMessage.RecommendedEventProto> responseObserver) {
+    public void getSimilarEvents(SimilarEventsRequestProto request,
+                                 StreamObserver<RecommendedEventProto> responseObserver) {
+        log.info("Получен запрос на поиск похожих событий: {}", request);
         try {
-            recommendationService.getRecommendationsForUser(request)
-                    .forEach(responseObserver::onNext);
+            List<RecommendedEventProto> similarEvents = recommendationService.getSimilarEvents(request);
+            similarEvents.forEach(responseObserver::onNext);
             responseObserver.onCompleted();
+            log.info("Успешно найдены похожие события");
         } catch (Exception e) {
-            log.error("Unexpected error occurred in getRecommendationsForUser: {}", e.getMessage(), e);
-            responseObserver.onError(
-                    new RuntimeException("Error while trying to complete getRecommendationsForUser")
-            );
+            log.error("Ошибка при поиске похожих событий: {}", request, e);
+            responseObserver.onError(io.grpc.Status.INTERNAL
+                    .withDescription("Ошибка сервера при поиске похожих событий: " + e.getMessage())
+                    .withCause(e)
+                    .asRuntimeException());
         }
     }
 
     @Override
-    public void getInteractionsCount(RecommendationMessage.InteractionsCountRequestProto request,
-                                     StreamObserver<RecommendationMessage.RecommendedEventProto> responseObserver) {
+    public void getInteractionsCount(InteractionsCountRequestProto request,
+                                     StreamObserver<RecommendedEventProto> responseObserver) {
+        log.info("Получен запрос на получение количества взаимодействий: {}", request);
         try {
-            log.info("Received request for getting number of activities about event. Stage 1");
-            recommendationService.getInteractionsCount(request)
-                    .forEach(responseObserver::onNext);
-            log.info("Received request for getting number of activities about event. Stage 2");
+            List<RecommendedEventProto> interactions = recommendationService.getInteractionsCount(request);
+            interactions.forEach(responseObserver::onNext);
             responseObserver.onCompleted();
-        } catch (StatusRuntimeException e) {
-            log.error("Unexpected error occurred StatusRuntimeException in getSimilarEvents: {}", e.getMessage(), e);
-
+            log.info("Успешно получено количество взаимодействий");
         } catch (Exception e) {
-            log.error("Unexpected error occurred in getSimilarEvents: {}", e.getMessage(), e);
-            responseObserver.onError(
-                    new RuntimeException("Error while trying to complete GetSimilarEvents")
-            );
+            log.error("Ошибка при получении количества взаимодействий: {}", request, e);
+            responseObserver.onError(io.grpc.Status.INTERNAL
+                    .withDescription("Ошибка сервера при получении количества взаимодействий: " + e.getMessage())
+                    .withCause(e)
+                    .asRuntimeException());
         }
     }
 }

@@ -1,7 +1,14 @@
 package ru.practicum.model;
 
-public record RecommendedEvent(
-        long eventId,
-        double score
-) {
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+@Builder
+@Getter
+@Setter
+@ToString
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class RecommendedEvent {
+    Long eventId;
+    double score;
 }

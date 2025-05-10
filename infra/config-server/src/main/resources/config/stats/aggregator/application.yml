@@ -1,22 +1,20 @@
 server:
-  port: 0
+  port: 8889
 
-spring:
-  kafka:
-    producer:
-      bootstrap-servers: localhost:9092
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: ru.practicum.serializer.AvroSerializer
-    consumer:
-      bootstrap-servers: localhost:9092
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: ru.practicum.deserializer.UserActionDeserializer
-      client-id: action-consumer
-      group-id: group-practicum
-      max-poll-records: 100
-      fetch-max-bytes: 3072000
-      max-partition-fetch-bytes: 307200
-      consume-attempts-timeout-ms: 1000
-    topics:
-      action-topic: stats.user-actions.v1
-      similarity-topic: stats.events-similarity.v1
+kafka:
+  bootstrapServers: localhost:9092
+  producerClientIdConfig: aggregator-producer
+  producerKeySerializer: org.apache.kafka.common.serialization.LongSerializer
+  producerValueSerializer: ru.practicum.serializer.AvroSerializer
+  consumerGroupId: aggregator-group
+  consumerClientIdConfig: aggregator-consumer
+  consumerKeyDeserializer: org.apache.kafka.common.serialization.LongDeserializer
+  consumerValueDeserializer: ru.practicum.deserializer.UserActionDeserializer
+  consumerEnableAutoCommit: "false"
+  userActionTopic: stats.user-actions.v1
+  eventsSimilarityTopic: stats.events-similarity.v1
+
+logging:
+  level:
+    ru.practicum: debug
+    root: info

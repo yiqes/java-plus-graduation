@@ -2,29 +2,46 @@ package ru.practicum.mapper;
 
 import ru.practicum.ewm.stats.avro.ActionTypeAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
-import ru.practicum.grpc.stats.action.UserActionMessage;
+import ru.practicum.grpc.stat.action.ActionTypeProto;
+import ru.practicum.grpc.stat.action.UserActionProto;
+import ru.practicum.model.ActionType;
+import ru.practicum.model.UserAction;
 
 import java.time.Instant;
 
 public class UserActionMapper {
-
-    public static UserActionAvro toAvro(UserActionMessage.UserActionRequest userActionProto) {
-        long timestampMillis = userActionProto.getTimestamp().getSeconds() * 1000
-                + userActionProto.getTimestamp().getNanos() / 1_000_000;
-
+    public static UserActionAvro toUserActionAvro(UserAction userAction) {
         return UserActionAvro.newBuilder()
-                .setUserId(userActionProto.getUserId())
-                .setEventId(userActionProto.getEventId())
-                .setActionType(toAvroActionType(userActionProto.getActionType()))
-                .setTimestamp(Instant.ofEpochSecond(timestampMillis))
+                .setUserId(userAction.getUserId())
+                .setEventId(userAction.getEventId())
+                .setTimestamp(userAction.getTimestamp())
+                .setActionType(toActionTypeAvro(userAction.getActionType()))
+                .build();
+
+    }
+
+    public static ActionTypeAvro toActionTypeAvro(ActionType actionType) {
+        return ActionTypeAvro.valueOf(actionType.name());
+    }
+
+
+    public static UserAction map(UserActionProto userActionProto) {
+        return UserAction.builder()
+                .userId(userActionProto.getUserId())
+                .eventId(userActionProto.getEventId())
+                .actionType(toActionType(userActionProto.getActionType()))
+                .timestamp(Instant.ofEpochSecond(userActionProto.getTimestamp().getSeconds(),
+                        userActionProto.getTimestamp().getNanos()))
                 .build();
     }
 
-    private static ActionTypeAvro toAvroActionType(UserActionMessage.ActionTypeProto protoType) {
-        return switch (protoType) {
-            case ACTION_REGISTER -> ActionTypeAvro.REGISTER;
-            case ACTION_LIKE -> ActionTypeAvro.LIKE;
-            default -> ActionTypeAvro.VIEW;
+    public static ActionType toActionType(ActionTypeProto actionTypeProto) {
+        return switch (actionTypeProto) {
+            case ACTION_VIEW -> ActionType.VIEW;
+            case ACTION_REGISTER -> ActionType.REGISTER;
+            case ACTION_LIKE -> ActionType.LIKE;
+            default -> null;
         };
     }
+
 }

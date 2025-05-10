@@ -9,19 +9,19 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.AnalyzerClient;
-import ru.practicum.CollectorClient;
 import ru.practicum.client.RequestServiceClient;
 import ru.practicum.client.UserServiceClient;
 import ru.practicum.dto.category.CategoryDto;
 import ru.practicum.dto.event.*;
+import ru.practicum.dto.user.UserDto;
+import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.enums.AdminStateAction;
 import ru.practicum.enums.EventState;
 import ru.practicum.enums.RequestStatus;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.exception.ValidationException;
-import ru.practicum.grpc.stats.action.UserActionMessage;
+import ru.practicum.grpc.stat.action.ActionTypeProto;
 import ru.practicum.mapper.event.EventMapper;
 import ru.practicum.mapper.event.UtilEventClass;
 import ru.practicum.mapper.location.LocationMapper;
@@ -29,11 +29,14 @@ import ru.practicum.model.*;
 import ru.practicum.model.Location;
 import ru.practicum.repository.*;
 import ru.practicum.service.category.CategoryService;
+import ru.practicum.stats.client.StatClient;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static ru.practicum.constant.Constant.PATTERN_DATE;
 import static ru.practicum.model.QEvent.event;
@@ -45,8 +48,6 @@ import static ru.practicum.model.QEvent.event;
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class EventServiceImpl implements EventService {
-
-    private final CollectorClient collectorClient;
 
     private final UserServiceClient userServiceClient;
 
@@ -61,7 +62,7 @@ public class EventServiceImpl implements EventService {
     LocationRepository locationRepository;
     SearchEventRepository searchEventRepository;
     CategoryRepository categoryRepository;
-    AnalyzerClient analyzerClient;
+    StatClient statClient;
 
     @Autowired
     public EventServiceImpl(EventRepository eventRepository,
@@ -70,8 +71,7 @@ public class EventServiceImpl implements EventService {
                             LocationRepository locationRepository, SearchEventRepository searchEventRepository,
                             CategoryRepository categoryRepository,
                             LocationMapper locationMapper,
-                            UserServiceClient userServiceClient, AnalyzerClient analyzerClient,
-                            CollectorClient collectorClient) {
+                            UserServiceClient userServiceClient, StatClient statClient) {
         this.eventRepository = eventRepository;
         this.requestServiceClient = requestServiceClient;
         this.eventMapper = eventMapper;
@@ -80,17 +80,19 @@ public class EventServiceImpl implements EventService {
         this.locationRepository = locationRepository;
         this.searchEventRepository = searchEventRepository;
         this.categoryRepository = categoryRepository;
-        this.analyzerClient = analyzerClient;
+        this.statClient = statClient;
         this.locationMapper = locationMapper;
         this.userServiceClient = userServiceClient;
-        this.collectorClient = collectorClient;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<EventShortDto> getEventsForUser(Long userId, Integer from, Integer size) {
         List<Event> events = eventRepository.findByInitiatorId(userId, PageRequest.of(from, size));
-
+        List<EventShortDto> eventsDto = events.stream()
+                .map(eventMapper::toEventShortDto)
+                .toList();
+        populateWithStats(eventsDto);
         return events.stream()
                 .map(eventMapper::toEventShortDto)
                 .collect(Collectors.toList());
@@ -205,6 +207,8 @@ public class EventServiceImpl implements EventService {
 
             }
         }
+        EventShortDto eventShortDto = eventMapper.toEventShortDto(event);
+        populateWithStats(List.of(eventShortDto));
         return utilEventClass.toEventFullDto(eventRepository.save(event));
     }
 
@@ -292,14 +296,16 @@ public class EventServiceImpl implements EventService {
 
         eventRepository.save(event);
 
-        collectorClient.sendUserAction(userId, eventId, UserActionMessage.ActionTypeProto.ACTION_VIEW);
-
+        log.info("starting statClient.registerUserAction");
+        statClient.registerUserAction(event.getId(), userId, ActionTypeProto.ACTION_VIEW, Instant.now());
         // Подсчет подтвержденных запросов
         long confirmedRequests = requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, eventId);
 
         // Создание DTO
         EventFullDto eventFullDto = utilEventClass.toEventFullDto(event);
         eventFullDto.setConfirmedRequests(confirmedRequests);
+        EventShortDto eventShortDto = eventMapper.toEventShortDto(event);
+        populateWithStats(List.of(eventShortDto));
 
 
         return eventFullDto;
@@ -503,7 +509,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventShortDto addLike(long userId, long eventId) {
+    public void addLike(long userId, long eventId) {
         Event event = eventRepository.findById(eventId).orElseThrow(
                 () -> new NotFoundException("Event with id = " + eventId, " not found")
         );
@@ -512,7 +518,7 @@ public class EventServiceImpl implements EventService {
         }
         eventRepository.addLike(userId, eventId);
         event.setLikes(eventRepository.countLikesByEventId(eventId));
-        return eventMapper.toEventShortDto(event);
+        statClient.registerUserAction(eventId, userId, ActionTypeProto.ACTION_LIKE, Instant.now());
     }
 
     @Override
@@ -527,5 +533,24 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Like for event: ", eventId
             + " by user: " + userId + " not exists");
         }
+    }
+
+    @Override
+    public Stream<RecommendedEventDto> getRecommendations(Long userId, int limit) {
+        return statClient.getRecommendationsFor(userId, limit)
+                .map(eventMapper::map);
+    }
+
+    private void populateWithStats(List<? extends EventShortDto> eventsDto) {
+        if (eventsDto.isEmpty()) return;
+
+        List<Long> eventIds = eventsDto.stream()
+                .map(EventShortDto::getId).toList();
+        Map<Long, Double> ratedEvents = statClient.getInteractionsCount(eventIds)
+                .map(eventMapper::map)
+                .collect(Collectors.toMap(RecommendedEventDto::getEventId, RecommendedEventDto::getScore));
+        log.info("ratedEvents are: {}", ratedEvents);
+        eventsDto.forEach(event -> Optional.ofNullable(ratedEvents.get(event.getId()))
+                .ifPresent(event::setRating));
     }
 }

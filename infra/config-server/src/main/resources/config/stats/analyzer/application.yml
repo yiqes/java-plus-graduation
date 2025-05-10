@@ -1,56 +1,63 @@
+server:
+  port: 9090
+
+kafka:
+  bootstrapServers: localhost:9092
+  userActionTopic: stats.user-actions.v1
+  eventsSimilarityTopic: stats.events-similarity.v1
+
+  userActionConsumer:
+    groupId: analyzer-group
+    clientId: analyzer-consumer
+    keyDeserializer: org.apache.kafka.common.serialization.LongDeserializer
+    valueDeserializer: ru.practicum.deserializer.UserActionDeserializer
+    enableAutoCommit: "false"
+    maxPollRecords: 500
+    maxPollIntervalMs: 300000
+    sessionTimeoutMs: 10000
+
+  eventSimilarityConsumer:
+    groupId: event-similarity
+    clientId: event-similarity-client
+    keyDeserializer: org.apache.kafka.common.serialization.LongDeserializer
+    valueDeserializer: ru.practicum.deserializer.EventSimilarityDeserializer
+    enableAutoCommit: "false"
+    maxPollRecords: 500
+    maxPollIntervalMs: 300000
+    sessionTimeoutMs: 10000
+
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/ewm-stats-analyzer-db
-    username: root
-    password: root
-  sql:
-    init:
-      mode: always
-  output:
-    ansi:
-      enabled: ALWAYS
   jpa:
-    hibernate:
-      ddl-auto: none
-    show-sql: false
+    hibernate.ddl-auto: none
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
-  kafka:
-    consumer-user-actions:
-      bootstrap-servers: localhost:9092
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: ru.yandex.practicum.deserializer.UserActionDeserializer
-      client-id: user-consumer
-      group-id: group-user
-      max-poll-records: 100
-      fetch-max-bytes: 3072000
-      max-partition-fetch-bytes: 307200
-      consume-attempts-timeout-ms: 1000
-    consumer-events-similarity:
-      bootstrap-servers: localhost:9092
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: ru.practicum.deserializer.EventSimilarityDeserializer
-      client-id: similarity-consumer
-      group-id: group-similarity
-      max-poll-records: 100
-      fetch-max-bytes: 3072000
-      max-partition-fetch-bytes: 307200
-      consume-attempts-timeout-ms: 1000
-    producer:
-      bootstrap-servers: localhost:9092
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: ru.practicum.serializer.AvroSerializer
-    topics:
-      user-action-topic: stats.user-actions.v1
-      events-similarity-topic: stats.events-similarity.v1
+  sql.init.mode: always
 
-grpc:
-  analyzer:
-    address: 'discovery:///analyzer'
-    enableKeepAlive: true
-    keepAliveWithoutCalls: true
-    negotiationType: plaintext
 logging:
+  file:
+    name: .from_the_beginning/analyzer_report.txt
+    max-size: 10MB
+    max-history: 1
   level:
-    io.grpc: DEBUG
+    ru.practicum.repository: TRACE
+    ru.practicum.service: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+logging.level:
+  org.springframework.orm.jpa: INFO
+  org.springframework.transaction: INFO
+  ru.practicum: DEBUG
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:analyzer
+    username: stats
+    password: stats

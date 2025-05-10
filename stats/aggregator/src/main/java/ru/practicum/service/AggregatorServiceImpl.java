@@ -2,10 +2,16 @@ package ru.practicum.service;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.specific.SpecificRecordBase;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.stereotype.Service;
+import ru.practicum.config.KafkaConfig;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
+import ru.practicum.ewm.stats.avro.ActionTypeAvro;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,114 +22,163 @@ import java.util.Map;
 @AllArgsConstructor
 public class AggregatorServiceImpl implements AggregatorService {
 
-    private final Map<Long, Map<Long, Double>> eventUserWeightMap = new HashMap<>();
-    private final Map<Long, Double> eventSum = new HashMap<>();
-    private final Map<Long, Map<Long, Double>> eventMinSum = new HashMap<>();
+    private final Producer<Long, SpecificRecordBase> producer;
+    private final KafkaConfig kafkaConfig;
+
+    private final Map<Long, Map<Long, Double>> eventUserWeights = new HashMap<>();
+    private final Map<Long, Double> eventTotalWeights = new HashMap<>();
+    private final Map<Long, Map<Long, Double>> pairMinWeights = new HashMap<>();
 
     @Override
-    public List<EventSimilarityAvro> getSimilarities(UserActionAvro actionAvro) {
-        log.info("Service AggregatorServiceImpl.getSimilarities");
-        long eventId = actionAvro.getEventId();
-        double newScore = getActionScore(actionAvro);
+    public List<EventSimilarityAvro> updateSimilarity(UserActionAvro userAction) {
+        log.info("Processing action for user {} and event {}",
+                userAction.getUserId(), userAction.getEventId());
 
-        double currentWeight = 0.0;
-        if (eventUserWeightMap.containsKey(eventId)) {
-            currentWeight = eventUserWeightMap.get(eventId).get(eventId);
-        } else {
-            currentWeight = newScore;
-            eventUserWeightMap.put(eventId, new HashMap<>());
+        List<EventSimilarityAvro> results = new ArrayList<>();
+        Long eventId = userAction.getEventId();
+        Long userId = userAction.getUserId();
+        double newWeight = getWeightByActionType(userAction.getActionType());
+
+        log.debug("Received weight: {} for event: {}, user: {}", newWeight, eventId, userId);
+
+        eventUserWeights.putIfAbsent(eventId, new HashMap<>());
+        double currentWeight = eventUserWeights.get(eventId).getOrDefault(userId, 0.0);
+        log.debug("Current weight: {} for event: {}, user: {}", currentWeight, eventId, userId);
+
+        if (newWeight <= currentWeight) {
+            log.debug("Weight not increased, skipping processing");
+            return results;
         }
-        if (currentWeight >= newScore) {
-            log.info("Old weight equals or greater than new one, returning void");
-            return List.of();
-        }
 
-        double newEventScoreSum;
+        eventUserWeights.get(eventId).put(userId, newWeight);
+        log.debug("Updated user weight to: {} for event: {}, user: {}", newWeight, eventId, userId);
 
-        newEventScoreSum = eventSum.getOrDefault(eventId, 0.0) - currentWeight + newScore;
-        eventSum.put(eventId, newEventScoreSum);
+        double deltaWeight = newWeight - currentWeight;
+        double newTotalWeight = eventTotalWeights.merge(eventId, deltaWeight, Double::sum);
+        log.debug("Updated total weight for event {}: {}", eventId, newTotalWeight);
 
+        for (Map.Entry<Long, Map<Long, Double>> entry : eventUserWeights.entrySet()) {
+            Long otherEventId = entry.getKey();
 
-        Map<Long, Double> eventsToRecalculate = getLongDoubleMap(actionAvro, eventId);
-
-        List<EventSimilarityAvro> similarities = new ArrayList<>();
-
-        for (Map.Entry<Long, Double> event2 : eventsToRecalculate.entrySet()) {
-            double minSum = getMinScore(eventId, event2.getKey());
-            double deltaMin = Math.min(newScore, event2.getValue()) - Math.min(currentWeight, event2.getValue());
-            if (deltaMin != 0) {
-                minSum += deltaMin;
-                putMinWeights(eventId, event2.getKey(), minSum);
+            if (otherEventId.equals(eventId)) {
+                log.debug("Skipping same event: {}", eventId);
+                continue;
             }
 
-            double event2Sum = eventSum.get(event2.getKey());
-            float score = (float) (minSum / Math.sqrt(newEventScoreSum) / Math.sqrt(event2Sum));
+            if (entry.getValue().containsKey(userId)) {
+                double otherWeight = entry.getValue().get(userId);
+                log.debug("Found interaction with event: {}, weight: {}", otherEventId, otherWeight);
 
-            similarities.add(
-                    EventSimilarityAvro.newBuilder()
-                            .setEventA(Math.min(eventId, event2.getKey()))
-                            .setEventB(Math.max(eventId, event2.getKey()))
-                            .setTimestamp(actionAvro.getTimestamp())
-                            .setScore(score)
-                            .build()
-            );
-        }
-        log.info("New weight {}", similarities);
+                long firstEvent = Math.min(eventId, otherEventId);
+                long secondEvent = Math.max(eventId, otherEventId);
+                log.debug("Processing pair: {} and {}", firstEvent, secondEvent);
 
-        return similarities;
-    }
+                double oldMin = Math.min(currentWeight, otherWeight);
+                double newMin = Math.min(newWeight, otherWeight);
+                double deltaMin = newMin - oldMin;
+                log.debug("Min weights - old: {}, new: {}, delta: {}", oldMin, newMin, deltaMin);
 
-    private Map<Long, Double> getLongDoubleMap(UserActionAvro action, long eventId) {
-        Map<Long, Double> eventsToRecalculate = new HashMap<>();
+                Map<Long, Double> secondLevelMap = pairMinWeights.computeIfAbsent(firstEvent, k -> new HashMap<>());
+                double currentSum = secondLevelMap.getOrDefault(secondEvent, 0.0);
+                double updatedSum = currentSum + deltaMin;
+                secondLevelMap.put(secondEvent, updatedSum);
 
-        for (Map.Entry<Long, Map<Long, Double>> entry : eventUserWeightMap.entrySet()) {
-            Long currentEventId = entry.getKey();
-            Map<Long, Double> userWeights = entry.getValue();
+                log.debug("Updated min weights sum for pair ({}, {}): was {}, now {}",
+                        firstEvent, secondEvent, currentSum, updatedSum);
 
-            if (!currentEventId.equals(eventId) && userWeights.containsKey(action.getUserId())) {
-                Double weight = userWeights.get(action.getUserId());
-                eventsToRecalculate.put(currentEventId, weight);
+                double sumA = eventTotalWeights.get(firstEvent);
+                double sumB = eventTotalWeights.get(secondEvent);
+                log.debug("Total weights - sumA: {}, sumB: {}", sumA, sumB);
+
+                double score = calculateCosineSimilarity(sumA, sumB, updatedSum);
+                log.info("Calculated similarity score for events {} and {}: {}",
+                        firstEvent, secondEvent, score);
+
+                if (score > 0) {
+                    EventSimilarityAvro similarity = createSimilarityAvro(firstEvent, secondEvent, score);
+                    results.add(similarity);
+                    log.debug("Created similarity record: {}", similarity);
+                }
             }
         }
-        return eventsToRecalculate;
+
+        return results;
     }
 
-    private void putMinWeights(long eventA, long eventB, double sum) {
-        long first = Math.min(eventA, eventB);
-        long second = Math.max(eventA, eventB);
-
-        if (!eventMinSum.containsKey(first)) {
-            eventMinSum.put(first, new HashMap<>());
+    private double calculateCosineSimilarity(double sumA, double sumB, double sumMin) {
+        if (sumA <= 0 || sumB <= 0 || sumMin <= 0) {
+            log.debug("Invalid input for similarity calculation - sumA: {}, sumB: {}, sumMin: {}",
+                    sumA, sumB, sumMin);
+            return 0;
         }
 
-        Map<Long, Double> innerMap = eventMinSum.get(first);
-        innerMap.put(second, sum);
-    }
+        double sqrtA = Math.sqrt(sumA);
+        double sqrtB = Math.sqrt(sumB);
+        double denominator = sqrtA * sqrtB;
 
-    private double getMinScore(long eventA, long eventB) {
-        long first = Math.min(eventA, eventB);
-        long second = Math.max(eventA, eventB);
-
-        Double value;
-        Map<Long, Double> innerMap;
-
-        if (!eventMinSum.containsKey(first)) {
-            innerMap = new HashMap<>();
-            eventMinSum.put(first, innerMap);
-        } else {
-            innerMap = eventMinSum.get(first);
+        if (denominator == 0) {
+            log.debug("Denominator is zero - sumA: {}, sumB: {}", sumA, sumB);
+            return 0;
         }
 
-        value = innerMap.getOrDefault(second, 0.0);
-
-        return value;
+        double score = sumMin / denominator;
+        double roundedScore = Math.round(score * 100000.0) / 100000.0;
+        return roundedScore;
     }
 
-    private double getActionScore(UserActionAvro action) {
-        return switch (action.getActionType()) {
+    private EventSimilarityAvro createSimilarityAvro(long eventA, long eventB, double score) {
+        return EventSimilarityAvro.newBuilder()
+                .setEventA(eventA)
+                .setEventB(eventB)
+                .setScore((float) score)
+                .setTimestamp(Instant.now())
+                .build();
+    }
+
+    private double getWeightByActionType(ActionTypeAvro actionType) {
+        return switch (actionType) {
             case VIEW -> 0.4;
             case REGISTER -> 0.8;
             case LIKE -> 1.0;
         };
+    }
+
+    @Override
+    public void collectEventSimilarity(EventSimilarityAvro eventSimilarityAvro) {
+        try {
+            ProducerRecord<Long, SpecificRecordBase> record = new ProducerRecord<>(
+                    kafkaConfig.getKafkaProperties().getEventsSimilarityTopic(),
+                    eventSimilarityAvro.getEventA(),
+                    eventSimilarityAvro);
+            producer.send(record);
+        } catch (Exception e) {
+            log.error("Error sending to Kafka: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void flush() {
+        if (producer != null) {
+            producer.flush();
+        }
+    }
+
+    @Override
+    public void close() {
+        try {
+            if (producer != null) {
+                producer.flush();
+            }
+        } finally {
+            if (producer != null) {
+                producer.close();
+            }
+        }
+    }
+
+    public void resetState() {
+        eventUserWeights.clear();
+        eventTotalWeights.clear();
+        pairMinWeights.clear();
     }
 }

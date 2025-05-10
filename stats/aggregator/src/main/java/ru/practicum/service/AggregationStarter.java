@@ -1,103 +1,87 @@
 package ru.practicum.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
-import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.stereotype.Component;
-import ru.practicum.config.AppConfig;
 import ru.practicum.config.KafkaConfig;
-import ru.practicum.config.SimilarityEventProducer;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Slf4j
 @Component
-
+@RequiredArgsConstructor
 public class AggregationStarter {
-    private static final Map<TopicPartition, OffsetAndMetadata> currentOffsets = new HashMap<>();
     private final AggregatorService aggregatorService;
-    private final SimilarityEventProducer similarityEventProducer;
+    private final Consumer<Long, UserActionAvro> consumer;
     private final KafkaConfig kafkaConfig;
-    private final AppConfig appConfig;
+    private final Map<TopicPartition, OffsetAndMetadata> currentOffsets = new HashMap<>();
 
-    public AggregationStarter(AggregatorService aggregatorService, SimilarityEventProducer eventProducer, KafkaConfig kafkaConfig, AppConfig appConfig) {
-        this.aggregatorService = aggregatorService;
-        this.similarityEventProducer = eventProducer;
-        this.kafkaConfig = kafkaConfig;
-        this.appConfig = appConfig;
-    }
 
-    private static void manageOffsets(ConsumerRecord<String, UserActionAvro> record, int count,
-                                      KafkaConsumer<String, UserActionAvro> consumer) {
+
+    private void manageOffsets(ConsumerRecord<Long, UserActionAvro> consumerRecord, int count, Consumer<Long, UserActionAvro> consumer) {
         currentOffsets.put(
-                new TopicPartition(record.topic(), record.partition()),
-                new OffsetAndMetadata(record.offset() + 1)
+                new TopicPartition(consumerRecord.topic(), consumerRecord.partition()),
+                new OffsetAndMetadata(consumerRecord.offset() + 1)
         );
 
         if (count % 10 == 0) {
             consumer.commitAsync(currentOffsets, (offsets, exception) -> {
                 if (exception != null) {
-                    log.warn("Error occurred while pinning offsets : {}", offsets, exception);
+                    log.warn("Ошибка во время фиксации оффсетов: {}", offsets, exception);
                 }
             });
         }
     }
 
     public void start() {
-
-        KafkaConsumer<String, UserActionAvro> consumer = new KafkaConsumer<>(kafkaConfig.getConsumerProperties());
         Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
 
         try {
-            consumer.subscribe(List.of(appConfig.getTopics().getActionTopic()));
+            consumer.subscribe(List.of(kafkaConfig.getKafkaProperties().getUserActionTopic()));
             while (true) {
-                ConsumerRecords<String, UserActionAvro> records = consumer.poll(appConfig.getConsumer().getConsumeAttemptsTimeoutMs());
-
+                ConsumerRecords<Long, UserActionAvro> records = consumer
+                        .poll(Duration.ofMillis(kafkaConfig.getKafkaProperties().getConsumerAttemptTimeout()));
                 int count = 0;
-                for (ConsumerRecord<String, UserActionAvro> record : records) {
+                for (ConsumerRecord<Long, UserActionAvro> record : records) {
+                    log.info("UserActionAvro got from consumer: {}", record);
                     handleRecord(record);
                     manageOffsets(record, count, consumer);
                     count++;
                 }
-                consumer.commitAsync();
-
             }
-        } catch (WakeupException | InterruptedException ignores) {
+
+        } catch (WakeupException ignores) {
+
         } catch (Exception e) {
-            log.error("Error occurred while reading data", e);
+            log.error("Ошибка во время обработки событий от датчиков", e);
         } finally {
 
             try {
                 consumer.commitSync(currentOffsets);
-            } finally {
-                log.info("Closing consumer");
-                consumer.close();
 
+            } finally {
+                log.info("Закрываем консьюмер");
+                consumer.close();
+                log.info("Отправляем все сообщения из буфера продюсера");
+                aggregatorService.flush();
+                log.info("Закрываем продюсер");
+                aggregatorService.close();
             }
         }
     }
 
-    private void handleRecord(ConsumerRecord<String, UserActionAvro> record) throws InterruptedException {
-
-        log.info("топик = {}, партиция = {}, смещение = {}, значение: {}\n",
-                record.topic(), record.partition(), record.offset(), record.value());
-        List<EventSimilarityAvro> result = aggregatorService.getSimilarities(record.value());
-        log.info("Сервис aggregatorService.getSimilarities отработал= {}", result);
-        if (!result.isEmpty()) {
-            log.info("Отправляем результаты расчета: {}", result);
-            for (EventSimilarityAvro event : result) {
-                similarityEventProducer.getProducer().send(new ProducerRecord<>(appConfig.getTopics().getSimilarityTopic(),
-                        event));
-            }
+    private void handleRecord(ConsumerRecord<Long, UserActionAvro> consumerRecord) throws InterruptedException {
+        List<EventSimilarityAvro> eventSimilarityList = aggregatorService.updateSimilarity(consumerRecord.value());
+        for (EventSimilarityAvro eventSimilarity : eventSimilarityList) {
+            aggregatorService.collectEventSimilarity(eventSimilarity);
         }
     }
 }

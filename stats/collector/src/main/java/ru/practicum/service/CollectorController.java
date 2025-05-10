@@ -1,39 +1,26 @@
 package ru.practicum.service;
 
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
+import com.google.protobuf.Empty;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
-import ru.practicum.grpc.stats.action.UserActionControllerGrpc;
-import ru.practicum.grpc.stats.action.UserActionMessage;
-import ru.practicum.handler.ActionsHandlers;
+import ru.practicum.mapper.UserActionMapper;
+import ru.practicum.grpc.stat.action.UserActionProto;
+import ru.practicum.grpc.stat.collector.UserActionControllerGrpc;
 
-@Slf4j
 @GrpcService
+@Slf4j
 @RequiredArgsConstructor
 public class CollectorController extends UserActionControllerGrpc.UserActionControllerImplBase {
-    private final ActionsHandlers actionHandler;
+    private final ActionService actionService;
 
     @Override
-    public void collectUserAction(UserActionMessage.UserActionRequest request, StreamObserver<UserActionMessage.UserActionResponse> responseObserver) {
-        try {
-            actionHandler.handle(request);
-            responseObserver.onNext(UserActionMessage.UserActionResponse.newBuilder().getDefaultInstanceForType());
-            responseObserver.onCompleted();
-        } catch (IllegalArgumentException e) {
-            log.error("IllegalArgumentException collectUserAction: {}", e.getMessage(), e);
-            responseObserver.onError(
-                    new StatusRuntimeException(Status.INVALID_ARGUMENT.withDescription(e.getMessage()).withCause(e))
-            );
-        } catch (Exception e) {
-            log.error("error collectUserAction: {}", e.getMessage(), e);
-            responseObserver.onError(
-                    new StatusRuntimeException(Status.UNKNOWN.withDescription("error").withCause(e))
-            );
-        }
+    public void collectUserAction(UserActionProto request, StreamObserver<Empty> responseObserver) {
+        log.info("ActionController call collectUserAction for request = {}", request);
+        actionService.collectUserAction(UserActionMapper.map(request));
+
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
     }
-
-
 }

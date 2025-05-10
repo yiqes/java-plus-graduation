@@ -1,45 +1,51 @@
 package ru.practicum.config;
 
-import lombok.Data;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.springframework.stereotype.Component;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import ru.practicum.ewm.stats.avro.UserActionAvro;
 
 import java.util.Properties;
 
 @Slf4j
-@Component
-@Data
-
+@Getter
+@Configuration
+@EnableConfigurationProperties({KafkaConfigProperties.class})
 public class KafkaConfig {
-    private final AppConfig appConfig;
+    private final KafkaConfigProperties kafkaProperties;
 
-    public KafkaConfig(AppConfig appConfig) {
-        this.appConfig = appConfig;
+    public KafkaConfig(KafkaConfigProperties properties) {
+        this.kafkaProperties = properties;
     }
 
-    public Properties getConsumerProperties() {
+    @Bean
+    public Producer<Long, SpecificRecordBase> producer() {
         Properties properties = new Properties();
-        properties.put(ConsumerConfig.GROUP_ID_CONFIG, appConfig.getConsumer().getGroupId());
-        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, appConfig.getConsumer().getBootstrapServers());
-        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, appConfig.getConsumer().getKeyDeserializer());
-        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, appConfig.getConsumer().getValueDeserializer());
-        properties.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, appConfig.getConsumer().getMaxPollRecords());
-        properties.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, appConfig.getConsumer().getFetchMaxBytes());
-        properties.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, appConfig.getConsumer().getMaxPartitionFetchBytes());
-        return properties;
+        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapServers());
+        properties.put(ProducerConfig.CLIENT_ID_CONFIG, kafkaProperties.getProducerClientIdConfig());
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, kafkaProperties.getProducerKeySerializer());
+        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, kafkaProperties.getProducerValueSerializer());
+        log.info("properties for producer are: {}", properties);
+        return new KafkaProducer<>(properties);
     }
 
-    public Properties getProducerProperties() {
-        Properties config = new Properties();
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                appConfig.getProducer().getBootstrapServers());
-        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-                appConfig.getProducer().getKeySerializer());
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-                appConfig.getProducer().getValueSerializer());
-        log.info("Kafka producer config is ready = {}", config);
-        return config;
+    @Bean
+    public KafkaConsumer<Long, UserActionAvro> consumer() {
+        Properties props = new Properties();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapServers());
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaProperties.getConsumerGroupId());
+        props.put(ConsumerConfig.CLIENT_ID_CONFIG, kafkaProperties.getConsumerClientIdConfig());
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, kafkaProperties.getConsumerKeyDeserializer());
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, kafkaProperties.getConsumerValueDeserializer());
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, kafkaProperties.getConsumerEnableAutoCommit());
+        return new KafkaConsumer<>(props);
     }
 }

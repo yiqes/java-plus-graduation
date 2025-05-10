@@ -1,14 +1,12 @@
 package ru.practicum.service.event;
 
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.dto.event.EventFullDto;
-import ru.practicum.dto.event.EventShortDto;
-import ru.practicum.dto.event.NewEventDto;
-import ru.practicum.dto.event.UpdateEventAdminRequest;
+import ru.practicum.dto.event.*;
 import ru.practicum.enums.EventState;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * The interface Event service.
@@ -96,9 +94,11 @@ public interface EventService {
     @Transactional(readOnly = true)
     List<EventShortDto> getAllByPublic(EventSearchParams searchParams, Boolean onlyAvailable, String sort, String clientIp);
 
-    EventShortDto addLike(long userId, long eventId);
+    void addLike(long userId, long eventId);
 
     void deleteLike(long userId, long eventId);
+
+    Stream<RecommendedEventDto> getRecommendations(Long userId, int limit);
 }
 
 

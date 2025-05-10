@@ -2,88 +2,84 @@ package ru.practicum.processor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import ru.practicum.config.KafkaConfig;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
-import ru.practicum.config.KafkaTopics;
-import ru.practicum.kafka.ConfigKafkaProperties;
-import ru.practicum.service.user.UserActionService;
+import ru.practicum.service.RecommendationService;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-
+import java.util.Map;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class UserActionEventProcessor implements Runnable {
 
-    @Value(value = "${spring.kafka.consumer-user-actions.consume-attempts-timeout-ms}")
-    private Duration consumeAttemptTimeout;
-    private final ConcurrentHashMap<TopicPartition, OffsetAndMetadata> currentOffsets = new ConcurrentHashMap<>();// снимок состояния
-    private final ConfigKafkaProperties consumerConfig;
-    private final UserActionService userActionService;
-    private final KafkaTopics kafkaTopics;
+    private final Consumer<Long, UserActionAvro> consumer;
+    private final KafkaConfig kafkaConfig;
+    private final Map<TopicPartition, OffsetAndMetadata> currentOffsets = new HashMap<>();
+    private final RecommendationService recommendationService;
 
     @Override
     public void run() {
-        Properties config = consumerConfig.getHubProperties();
-        KafkaConsumer<String, UserActionAvro> consumer = new KafkaConsumer<>(config);
         Runtime.getRuntime().addShutdownHook(new Thread(consumer::wakeup));
-
         try {
-            consumer.subscribe(List.of(kafkaTopics.getUserActionsTopic()));
+            consumer.subscribe(List.of(kafkaConfig.getKafkaProperties().getUserActionTopic()));
             while (true) {
-                ConsumerRecords<String, UserActionAvro> records = consumer.poll(consumeAttemptTimeout);
+                ConsumerRecords<Long, UserActionAvro> records = consumer
+                        .poll(Duration.ofMillis(kafkaConfig.getKafkaProperties()
+                                .getUserActionConsumer().getAttemptTimeout()));
                 int count = 0;
-                for (ConsumerRecord<String, UserActionAvro> record : records) {
+                for (ConsumerRecord<Long, UserActionAvro> record : records) {
                     handleRecord(record);
                     manageOffsets(record, count, consumer);
                     count++;
                 }
-                consumer.commitAsync();
             }
-        } catch (WakeupException | InterruptedException ignores) {
+
+        } catch (WakeupException ignores) {
+
         } catch (Exception e) {
-            log.error("Error occurred while reading from hubs", e);
+            log.error("Ошибка во время обработки события хаба ", e);
         } finally {
+
             try {
                 consumer.commitSync(currentOffsets);
+
             } finally {
-                log.info("Closing consumers");
+                log.info("Закрываем консьюмер");
                 consumer.close();
             }
         }
     }
 
-    private void manageOffsets(ConsumerRecord<String, UserActionAvro> record, int count,
-                               KafkaConsumer<String, UserActionAvro> consumer) {
+    private void handleRecord(ConsumerRecord<Long, UserActionAvro> consumerRecord) throws InterruptedException {
+        log.info("handleRecord {}", consumerRecord);
+        recommendationService.saveUserAction(consumerRecord.value());
+    }
+
+    private void manageOffsets(ConsumerRecord<Long, UserActionAvro> consumerRecord,
+                               int count,
+                               Consumer<Long, UserActionAvro> consumer) {
         currentOffsets.put(
-                new TopicPartition(record.topic(), record.partition()),
-                new OffsetAndMetadata(record.offset() + 1)
+                new TopicPartition(consumerRecord.topic(), consumerRecord.partition()),
+                new OffsetAndMetadata(consumerRecord.offset() + 1)
         );
 
         if (count % 10 == 0) {
             consumer.commitAsync(currentOffsets, (offsets, exception) -> {
                 if (exception != null) {
-                    log.warn("Error with offset fixation: {}", offsets, exception);
+                    log.warn("Ошибка во время фиксации оффсетов: {}", offsets, exception);
                 }
             });
         }
-    }
-
-    private void handleRecord(ConsumerRecord<String, UserActionAvro> record) throws InterruptedException {
-
-        log.info("topic = {}, partition = {}, changing = {}, value: {}\n",
-                record.topic(), record.partition(), record.offset(), record.value());
-        userActionService.handleUserAction(record.value());
     }
 }
