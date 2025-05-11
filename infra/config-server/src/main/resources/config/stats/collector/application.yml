@@ -1,6 +1,6 @@
 logging:
   level:
-    ru.yandex.practicum: debug
+    ru.practicum: debug
     root: info
 
 grpc:
