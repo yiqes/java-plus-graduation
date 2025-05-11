@@ -92,7 +92,7 @@ public class EventServiceImpl implements EventService {
         List<EventShortDto> eventsDto = events.stream()
                 .map(eventMapper::toEventShortDto)
                 .toList();
-        populateWithStats(eventsDto);
+        //populateWithStats(eventsDto);
         return events.stream()
                 .map(eventMapper::toEventShortDto)
                 .collect(Collectors.toList());
@@ -207,8 +207,8 @@ public class EventServiceImpl implements EventService {
 
             }
         }
-        EventShortDto eventShortDto = eventMapper.toEventShortDto(event);
-        populateWithStats(List.of(eventShortDto));
+        //EventShortDto eventShortDto = eventMapper.toEventShortDto(event);
+        //populateWithStats(List.of(eventShortDto));
         return utilEventClass.toEventFullDto(eventRepository.save(event));
     }
 
@@ -305,7 +305,7 @@ public class EventServiceImpl implements EventService {
         EventFullDto eventFullDto = utilEventClass.toEventFullDto(event);
         eventFullDto.setConfirmedRequests(confirmedRequests);
         EventShortDto eventShortDto = eventMapper.toEventShortDto(event);
-        populateWithStats(List.of(eventShortDto));
+        //populateWithStats(List.of(eventShortDto));
 
 
         return eventFullDto;
@@ -541,16 +541,16 @@ public class EventServiceImpl implements EventService {
                 .map(eventMapper::map);
     }
 
-    private void populateWithStats(List<? extends EventShortDto> eventsDto) {
-        if (eventsDto.isEmpty()) return;
-
-        List<Long> eventIds = eventsDto.stream()
-                .map(EventShortDto::getId).toList();
-        Map<Long, Double> ratedEvents = statClient.getInteractionsCount(eventIds)
-                .map(eventMapper::map)
-                .collect(Collectors.toMap(RecommendedEventDto::getEventId, RecommendedEventDto::getScore));
-        log.info("ratedEvents are: {}", ratedEvents);
-        eventsDto.forEach(event -> Optional.ofNullable(ratedEvents.get(event.getId()))
-                .ifPresent(event::setRating));
-    }
+//    private void populateWithStats(List<? extends EventShortDto> eventsDto) {
+//        if (eventsDto.isEmpty()) return;
+//
+//        List<Long> eventIds = eventsDto.stream()
+//                .map(EventShortDto::getId).toList();
+//        Map<Long, Double> ratedEvents = statClient.getInteractionsCount(eventIds)
+//                .map(eventMapper::map)
+//                .collect(Collectors.toMap(RecommendedEventDto::getEventId, RecommendedEventDto::getScore));
+//        log.info("ratedEvents are: {}", ratedEvents);
+//        eventsDto.forEach(event -> Optional.ofNullable(ratedEvents.get(event.getId()))
+//                .ifPresent(event::setRating));
+//    }
 }
