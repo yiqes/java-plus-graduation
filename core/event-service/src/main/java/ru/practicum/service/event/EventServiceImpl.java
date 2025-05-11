@@ -304,7 +304,7 @@ public class EventServiceImpl implements EventService {
         // Создание DTO
         EventFullDto eventFullDto = utilEventClass.toEventFullDto(event);
         eventFullDto.setConfirmedRequests(confirmedRequests);
-        EventShortDto eventShortDto = eventMapper.toEventShortDto(event);
+        //EventShortDto eventShortDto = eventMapper.toEventShortDto(event);
         //populateWithStats(List.of(eventShortDto));
 
 

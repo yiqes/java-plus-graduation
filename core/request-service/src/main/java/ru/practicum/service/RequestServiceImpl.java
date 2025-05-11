@@ -50,7 +50,7 @@ public class RequestServiceImpl implements RequestService {
         requestToEventVerification(userId, eventId);
         Request request = requestMapper.formUserAndEventToRequest(userId, eventId);
         requestRepository.save(request);
-        statClient.registerUserAction(userId, eventId, ActionTypeProto.ACTION_REGISTER, Instant.now());
+        //statClient.registerUserAction(userId, eventId, ActionTypeProto.ACTION_REGISTER, Instant.now());
         return requestMapper.toParticipationRequestDto(request);
     }
 
