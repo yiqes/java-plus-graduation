@@ -297,7 +297,7 @@ public class EventServiceImpl implements EventService {
         eventRepository.save(event);
 
         log.info("starting statClient.registerUserAction");
-        statClient.registerUserAction(event.getId(), userId, ActionTypeProto.ACTION_VIEW, Instant.now());
+        //statClient.registerUserAction(event.getId(), userId, ActionTypeProto.ACTION_VIEW, Instant.now());
         // Подсчет подтвержденных запросов
         long confirmedRequests = requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, eventId);
 
