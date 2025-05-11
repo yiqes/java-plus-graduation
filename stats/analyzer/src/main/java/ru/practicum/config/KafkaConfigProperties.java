@@ -1,17 +1,19 @@
 package ru.practicum.config;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "kafka")
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class KafkaConfigProperties {
-    private String bootstrapServers;
-    private ConsumerProperties userActionConsumer;
-    private ConsumerProperties eventSimilarityConsumer;
-
-    private String userActionTopic;
-    private String eventsSimilarityTopic;
+    String bootstrapServers;
+    ConsumerProperties userActionConsumer;
+    ConsumerProperties eventSimilarityConsumer;
+    String userActionTopic;
+    String eventsSimilarityTopic;
 }

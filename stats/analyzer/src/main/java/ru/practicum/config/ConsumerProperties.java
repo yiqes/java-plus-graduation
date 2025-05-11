@@ -1,17 +1,20 @@
 package ru.practicum.config;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class ConsumerProperties {
-    private String groupId;
-    private String clientId;
-    private String keyDeserializer;
-    private String valueDeserializer;
-    private long attemptTimeout;
-    private String enableAutoCommit;
+    String groupId;
+    String clientId;
+    String keyDeserializer;
+    String valueDeserializer;
+    long attemptTimeout;
+    String enableAutoCommit;
 }

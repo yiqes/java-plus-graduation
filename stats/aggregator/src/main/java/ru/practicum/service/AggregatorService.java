@@ -10,8 +10,7 @@ public interface AggregatorService {
 
     void collectEventSimilarity(EventSimilarityAvro eventSimilarityAvro);
 
-    default void close() {
-    }
+    default void close() {}
 
     void flush();;
 }

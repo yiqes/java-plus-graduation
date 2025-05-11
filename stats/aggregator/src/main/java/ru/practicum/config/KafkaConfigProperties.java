@@ -1,26 +1,26 @@
 package ru.practicum.config;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "kafka")
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class KafkaConfigProperties {
-    private String bootstrapServers;
-
-    private String producerClientIdConfig;
-    private String producerKeySerializer;
-    private String producerValueSerializer;
-
-    private String consumerGroupId;
-    private String consumerClientIdConfig;
-    private String consumerKeyDeserializer;
-    private String consumerValueDeserializer;
-    private long consumerAttemptTimeout;
-    private String consumerEnableAutoCommit;
-
-    private String userActionTopic;
-    private String eventsSimilarityTopic;
+    String bootstrapServers;
+    String producerClientIdConfig;
+    String producerKeySerializer;
+    String producerValueSerializer;
+    String consumerGroupId;
+    String consumerClientIdConfig;
+    String consumerKeyDeserializer;
+    String consumerValueDeserializer;
+    long consumerAttemptTimeout;
+    String consumerEnableAutoCommit;
+    String userActionTopic;
+    String eventsSimilarityTopic;
 }

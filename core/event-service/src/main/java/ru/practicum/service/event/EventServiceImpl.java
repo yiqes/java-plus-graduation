@@ -13,8 +13,6 @@ import ru.practicum.client.RequestServiceClient;
 import ru.practicum.client.UserServiceClient;
 import ru.practicum.dto.category.CategoryDto;
 import ru.practicum.dto.event.*;
-import ru.practicum.dto.user.UserDto;
-import ru.practicum.dto.user.UserShortDto;
 import ru.practicum.enums.AdminStateAction;
 import ru.practicum.enums.EventState;
 import ru.practicum.enums.RequestStatus;
@@ -89,10 +87,6 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public List<EventShortDto> getEventsForUser(Long userId, Integer from, Integer size) {
         List<Event> events = eventRepository.findByInitiatorId(userId, PageRequest.of(from, size));
-        List<EventShortDto> eventsDto = events.stream()
-                .map(eventMapper::toEventShortDto)
-                .toList();
-        //populateWithStats(eventsDto);
         return events.stream()
                 .map(eventMapper::toEventShortDto)
                 .collect(Collectors.toList());
@@ -207,8 +201,6 @@ public class EventServiceImpl implements EventService {
 
             }
         }
-        //EventShortDto eventShortDto = eventMapper.toEventShortDto(event);
-        //populateWithStats(List.of(eventShortDto));
         return utilEventClass.toEventFullDto(eventRepository.save(event));
     }
 
@@ -296,80 +288,15 @@ public class EventServiceImpl implements EventService {
 
         eventRepository.save(event);
 
-        log.info("starting statClient.registerUserAction");
-        //statClient.registerUserAction(event.getId(), userId, ActionTypeProto.ACTION_VIEW, Instant.now());
         // Подсчет подтвержденных запросов
         long confirmedRequests = requestServiceClient.countByStatusAndEventId(RequestStatus.CONFIRMED, eventId);
 
         // Создание DTO
         EventFullDto eventFullDto = utilEventClass.toEventFullDto(event);
         eventFullDto.setConfirmedRequests(confirmedRequests);
-        //EventShortDto eventShortDto = eventMapper.toEventShortDto(event);
-        //populateWithStats(List.of(eventShortDto));
-
 
         return eventFullDto;
     }
-
-//    private void saveEventsRequestToStats(String clientIp) {
-//        try {
-//            // Создание объекта для статистики
-//            log.info("Создание объекта для статистики");
-//            EndpointHitDto hitDto = new EndpointHitDto();
-//            hitDto.setApp("ewm-main-service");
-//            hitDto.setUri("/events");
-//            hitDto.setIp(clientIp);
-//            hitDto.setTimestamp(LocalDateTime.now().format(dateTimeFormatter));
-//
-//            // Логируем успешный запрос
-//            log.info("Логируем запрос в статистику: URI={}, IP={}", hitDto.getUri(), hitDto.getIp());
-//
-//            // Отправка статистики
-//            statClient.saveHit(hitDto);
-//        } catch (Exception e) {
-//            log.error("Ошибка при сохранении статистики для URI=/events, IP=" + clientIp, e);
-//        }
-//    }
-
-//    private void saveEventRequestToStats(Event event, String clientIp) {
-//        try {
-//            EndpointHitDto hitDto = new EndpointHitDto();
-//            hitDto.setApp("ewm-main-service");
-//            hitDto.setUri("/events/" + event.getId());
-//            hitDto.setIp(clientIp);
-//            hitDto.setTimestamp(LocalDateTime.now().format(dateTimeFormatter));
-//
-//            statClient.saveHit(hitDto);
-//        } catch (Exception e) {
-//            log.error("Ошибка при сохранении статистики для события id=" + event.getId(), e);
-//        }
-//    }
-
-//    private long getViewsFromStats(Event event) {
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-//        try {
-//            String uri = "/events/" + event.getId();
-//            // Добавляем одну секунду к началу и завершению диапазона
-//            String start = event.getCreatedOn().minusSeconds(1).format(formatter);
-//            String end = LocalDateTime.now().plusSeconds(1).format(formatter);
-//
-//            List<ViewStatsDto> stats = statClient.getStats(
-//                    start,
-//                    end,
-//                    List.of(uri),
-//                    true
-//            );
-//
-//            return stats.stream()
-//                    .filter(stat -> stat.getUri().equals(uri))
-//                    .mapToLong(ViewStatsDto::getHits)
-//                    .sum();
-//        } catch (Exception e) {
-//            log.error("Ошибка при получении статистики просмотров для события id=" + event.getId(), e);
-//            return 0;
-//        }
-//    }
-
 
     private void checkDateTime(LocalDateTime rangeStart, LocalDateTime rangeEnd) {
         if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
@@ -540,17 +467,4 @@ public class EventServiceImpl implements EventService {
         return statClient.getRecommendationsFor(userId, limit)
                 .map(eventMapper::map);
     }
-
-//    private void populateWithStats(List<? extends EventShortDto> eventsDto) {
-//        if (eventsDto.isEmpty()) return;
-//
-//        List<Long> eventIds = eventsDto.stream()
-//                .map(EventShortDto::getId).toList();
-//        Map<Long, Double> ratedEvents = statClient.getInteractionsCount(eventIds)
-//                .map(eventMapper::map)
-//                .collect(Collectors.toMap(RecommendedEventDto::getEventId, RecommendedEventDto::getScore));
-//        log.info("ratedEvents are: {}", ratedEvents);
-//        eventsDto.forEach(event -> Optional.ofNullable(ratedEvents.get(event.getId()))
-//                .ifPresent(event::setRating));
-//    }
 }

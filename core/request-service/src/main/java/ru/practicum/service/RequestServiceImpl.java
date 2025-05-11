@@ -33,7 +33,6 @@ public class RequestServiceImpl implements RequestService {
     private final RequestMapper requestMapper;
     private final UserServiceClient userServiceClient;
     private final RequestRepository requestRepository;
-    private final StatClient statClient;
 
     @Override
     public List<ParticipationRequestDto> getRequestByUserId(Long userId) {
@@ -50,7 +49,6 @@ public class RequestServiceImpl implements RequestService {
         requestToEventVerification(userId, eventId);
         Request request = requestMapper.formUserAndEventToRequest(userId, eventId);
         requestRepository.save(request);
-        //statClient.registerUserAction(userId, eventId, ActionTypeProto.ACTION_REGISTER, Instant.now());
         return requestMapper.toParticipationRequestDto(request);
     }
 
