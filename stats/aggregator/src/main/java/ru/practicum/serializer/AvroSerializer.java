@@ -1,4 +1,4 @@
-package ru.yandex.practicum.serializer;
+package ru.practicum.serializer;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.io.BinaryEncoder;
