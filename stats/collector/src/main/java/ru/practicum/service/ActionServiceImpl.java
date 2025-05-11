@@ -1,11 +1,11 @@
 package ru.practicum.service;
 
 import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.mapper.UserActionMapper;
 import ru.practicum.model.UserAction;
@@ -15,16 +15,11 @@ import ru.practicum.ewm.stats.avro.UserActionAvro;
 import java.util.Objects;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class ActionServiceImpl implements ActionService {
     private final Producer<Long, SpecificRecordBase> producer;
     private final KafkaConfig kafkaConfig;
-
-    @Autowired
-    public ActionServiceImpl(Producer<Long, SpecificRecordBase> producer, KafkaConfig kafkaConfig) {
-        this.producer = producer;
-        this.kafkaConfig = kafkaConfig;
-    }
 
     @Override
     public void collectUserAction(UserAction userAction) {
