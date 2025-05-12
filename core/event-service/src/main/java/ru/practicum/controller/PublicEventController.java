@@ -7,13 +7,16 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventShortDto;
+import ru.practicum.dto.event.RecommendedEventDto;
 import ru.practicum.exception.IncorrectValueException;
 import ru.practicum.service.event.EventSearchParams;
 import ru.practicum.service.event.EventService;
 import ru.practicum.service.event.PublicSearchParams;
+import ru.practicum.stats.client.StatClient;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static ru.practicum.constant.Constant.PATTERN_DATE;
 
@@ -25,7 +28,10 @@ import static ru.practicum.constant.Constant.PATTERN_DATE;
 @RequiredArgsConstructor
 @Slf4j
 public class PublicEventController {
+
+    private final StatClient statClient;
     private final EventService eventService;
+    private static final String X_EWM_USER_ID_HEADER = "X-EWM-USER-ID";
 
     /**
      * Gets events.
@@ -83,21 +89,23 @@ public class PublicEventController {
         return eventShortDtoList;
     }
 
-    /**
-     * Gets event by id.
-     *
-     * @param eventId the event id
-     * @param request the request
-     * @return the event by id
-     */
     @GetMapping("/{event-id}")
-    public EventFullDto getEventById(@PathVariable("event-id") Long eventId, HttpServletRequest request) {
+    public EventFullDto getEventById(@PathVariable("event-id") Long eventId, @RequestHeader(X_EWM_USER_ID_HEADER) long userId) {
         log.info("Получение информации о событии с id={}", eventId);
 
-        // Получение IP клиента
-        String clientIp = request.getRemoteAddr();
-
         // Получение события через сервис
-        return eventService.getEventById(eventId, clientIp);
+        return eventService.getEventById(eventId, userId);
+    }
+
+    @GetMapping("/recommendations")
+    public Stream<RecommendedEventDto> getRecommendations(@RequestHeader(X_EWM_USER_ID_HEADER) long userId,
+                                                          @RequestParam(defaultValue = "10") int maxResults) {
+        return eventService.getRecommendations(userId, maxResults);
+    }
+
+    @PutMapping("/{event-id}/like")
+    public void likeEvent(@PathVariable("event-id") Long eventId,
+                          @RequestHeader(X_EWM_USER_ID_HEADER) long userId) {
+        eventService.addLike(userId, eventId);
     }
 }

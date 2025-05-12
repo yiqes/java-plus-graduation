@@ -128,7 +128,7 @@ public class UtilEventClass {
                         request.getRequestModeration() : updatedEvent.getRequestModeration())
                 .state(updatedEvent.getState())
                 .title(request.getTitle() != null ? request.getTitle() : updatedEvent.getTitle())
-                .views(updatedEvent.getViews())
+                .rating(updatedEvent.getRating())
                 .build();
     }
 
@@ -160,7 +160,7 @@ public class UtilEventClass {
         eventFullDto.setRequestModeration(event.getRequestModeration());
         eventFullDto.setState(event.getState());
         eventFullDto.setTitle(event.getTitle());
-        eventFullDto.setViews(event.getViews());
+        eventFullDto.setRating(event.getRating());
         eventFullDto.setEventDate(event.getEventDate().format(formatter));
 
         return eventFullDto;

@@ -1,7 +1,9 @@
 package ru.practicum.repository;
 
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.query.Param;
@@ -77,4 +79,18 @@ public interface EventRepository extends JpaRepository<Event, Long>, QuerydslPre
 
     @Query(value = "SELECT COUNT(*) FROM LIKES_EVENTS WHERE EVENT_ID = :eventId", nativeQuery = true)
     long countLikesByEventId(Long eventId);
+
+    @Query(value = "SELECT EXISTS (" +
+            "SELECT * FROM LIKES_EVENTS WHERE USER_ID = :userId AND EVENT_ID = :eventId)", nativeQuery = true)
+    boolean checkLikeExistence(long userId, long eventId);
+
+    @Modifying
+    @Transactional
+    @Query(value = "INSERT INTO LIKES_EVENTS (USER_ID, EVENT_ID) values (:userId, :eventId)", nativeQuery = true)
+    void addLike(Long userId, Long eventId);
+
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM LIKES_EVENTS WHERE USER_ID = :userId AND EVENT_ID = :eventId", nativeQuery = true)
+    void deleteLike(Long userId, Long eventId);
 }

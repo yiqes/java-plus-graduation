@@ -3,6 +3,8 @@ package ru.practicum.mapper.event;
 import org.mapstruct.Mapper;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventShortDto;
+import ru.practicum.dto.event.RecommendedEventDto;
+import ru.practicum.grpc.stat.request.RecommendedEventProto;
 import ru.practicum.mapper.location.LocationMapper;
 import ru.practicum.model.Event;
 
@@ -45,4 +47,6 @@ public interface EventMapper {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         return dateTime.format(formatter);
     }
+
+    RecommendedEventDto map(RecommendedEventProto proto);
 }

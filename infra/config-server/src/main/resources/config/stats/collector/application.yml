@@ -1,0 +1,18 @@
+logging:
+  level:
+    ru.practicum: debug
+    root: info
+
+grpc:
+  server:
+    port: 0
+
+server:
+  port: 8888
+
+kafka:
+  user-action-topic: stats.user-actions.v1
+  bootstrap-servers: localhost:9092
+  client-id-config: collector-client
+  producer-key-serializer: org.apache.kafka.common.serialization.LongSerializer
+  producer-value-serializer: ru.practicum.serializer.UserActionsAvroSerializer
